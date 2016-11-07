@@ -1,0 +1,57 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.mient.radiomi.radiomi.fragments.DetailsFragment">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/shade_gradien">
+
+        <RelativeLayout
+            android:id="@+id/details_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="15dp"
+            android:background="#d98200">
+
+            <TextView
+                android:id="@+id/details_header_title"
+                android:layout_width="210dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="15dp"
+                android:layout_marginTop="35dp"
+                android:layout_marginRight="15dp"
+                android:text="Flight Plan bla bla(Tunes for Travel bla bla)"
+                android:textSize="20sp"
+                android:lines="4"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/details_header_image"
+                android:layout_width="190dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="240dp"
+                android:layout_marginTop="25dp"
+                android:src="@drawable/flightplanmusic"
+                android:scaleType="centerCrop"/>
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:id="@+id/container_playlist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="15dp"
+            android:layout_marginTop="110dp">
+        </FrameLayout>
+    </RelativeLayout>
+
+</FrameLayout>

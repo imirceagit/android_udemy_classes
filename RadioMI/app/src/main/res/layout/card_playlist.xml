@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    xmlns:card_view = "http://schemas.android.com/apk/res-auto"
+    xmlns:android = "http://schemas.android.com/apk/res/android"
+    android:id="@+id/card_playlist"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    card_view:cardCornerRadius="10dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TableRow
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp">
+
+                <ImageView
+                    android:id="@+id/image_one"
+                    android:layout_width="107dp"
+                    android:layout_height="107dp"
+                    android:layout_marginRight="5dp"
+                    android:scaleType="centerCrop"/>
+
+                <ImageView
+                    android:id="@+id/image_two"
+                    android:layout_width="107dp"
+                    android:layout_height="107dp"
+                    android:layout_marginRight="5dp"
+                    android:scaleType="centerCrop" />
+
+                <ImageView
+                    android:id="@+id/image_three"
+                    android:layout_width="107dp"
+                    android:layout_height="107dp"
+                    android:scaleType="centerCrop" />
+
+            </TableRow>
+
+            <TableRow
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp">
+
+                <ImageView
+                    android:id="@+id/image_four"
+                    android:layout_width="107dp"
+                    android:layout_height="107dp"
+                    android:layout_marginRight="5dp"
+                    android:scaleType="centerCrop"/>
+
+                <ImageView
+                    android:id="@+id/image_five"
+                    android:layout_width="107dp"
+                    android:layout_height="107dp"
+                    android:layout_marginRight="5dp"
+                    android:scaleType="centerCrop"/>
+
+                <ImageView
+                    android:id="@+id/image_six"
+                    android:layout_width="107dp"
+                    android:layout_height="107dp"
+                    android:scaleType="centerCrop"/>
+            </TableRow>
+
+        </TableLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/playlist_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:text="International Playlist"
+                android:textSize="20sp"
+                android:layout_weight="6" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/moregrey"
+                card_view:srcCompat="@drawable/moregrey"
+                android:layout_weight="1" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/playlist_details"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="Celebrate bla bla music, bla bla bla."
+            android:textSize="16sp"
+            android:lines="2"/>
+
+    </LinearLayout>
+
+</android.support.v7.widget.CardView>

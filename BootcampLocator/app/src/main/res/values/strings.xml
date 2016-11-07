@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Bootcamp Locator</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="search_hint">Enter zipcode</string>
+</resources>

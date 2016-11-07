@@ -1,11 +1,13 @@
 package com.mient.radiomi.radiomi.adapters;
 
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.mient.radiomi.radiomi.R;
+import com.mient.radiomi.radiomi.activities.MainActivity;
 import com.mient.radiomi.radiomi.holders.StationViewHolder;
 import com.mient.radiomi.radiomi.model.Station;
 
@@ -31,9 +33,17 @@ public class StationsAdaptor extends RecyclerView.Adapter<StationViewHolder> {
     }
 
     @Override
-    public void onBindViewHolder(StationViewHolder holder, int position) {
-        Station station = stations.get(position);
+    public void onBindViewHolder(StationViewHolder holder, final int position) {
+        final Station station = stations.get(position);
         holder.updateUI(station);
+
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Load details screen
+                MainActivity.getMainActivity().loadDetailsScreen(station);
+            }
+        });
     }
 
     @Override

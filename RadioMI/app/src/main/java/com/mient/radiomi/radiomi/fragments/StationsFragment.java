@@ -1,6 +1,7 @@
 package com.mient.radiomi.radiomi.fragments;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -77,10 +78,12 @@ public class StationsFragment extends Fragment {
         if(stationType == StationsFragment.STATION_TYPE_FEATURED){
             adaptor = new StationsAdaptor(DataService.getInstance().getFeatureStations());
         }else if(stationType == StationsFragment.STATION_TYPE_RECENT){
-            adaptor = new StationsAdaptor(DataService.getInstance().getRecentStations());
+            adaptor = new StationsAdaptor(DataService.getInstance().getFeatureStations());
         }else {
-            adaptor = new StationsAdaptor(DataService.getInstance().getPartyStations());
+            adaptor = new StationsAdaptor(DataService.getInstance().getFeatureStations());
         }
+
+        recyclerView.addItemDecoration(new HorizontalSpaceItemDecorator(30));
 
         recyclerView.setAdapter(adaptor);
 
@@ -130,5 +133,20 @@ public class StationsFragment extends Fragment {
     public interface OnStationsFragmentInteractionListener {
         // TODO: Update argument type and name
         void onStationsFragmentInteraction(Uri uri);
+    }
+}
+
+class HorizontalSpaceItemDecorator extends RecyclerView.ItemDecoration {
+
+    private  final int spacer;
+
+    public HorizontalSpaceItemDecorator(int spacer) {
+        this.spacer = spacer;
+    }
+
+    @Override
+    public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
+        super.getItemOffsets(outRect, view, parent, state);
+        outRect.right = spacer;
     }
 }

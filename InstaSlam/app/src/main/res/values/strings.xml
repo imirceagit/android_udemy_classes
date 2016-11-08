@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">InstaSlam</string>
+    <string name="action_news">News</string>
+    <string name="section_format">Hello World from section: %1$d</string>
+
+    <string name="title_activity_media">Choose Media</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+</resources>

@@ -1,0 +1,11 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.mient.instaslam.instaslam.activities.MainActivity">
+    <item
+        android:id="@+id/action_news"
+        android:orderInCategory="100"
+        android:title="@string/action_news"
+        android:icon="@drawable/inbox_btn"
+        app:showAsAction="always" />
+</menu>

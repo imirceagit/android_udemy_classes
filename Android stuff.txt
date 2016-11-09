@@ -1,0 +1,17 @@
+https://chris.banes.me/2014/10/17/appcompat-v21/
+http://saulmm.github.io/mastering-coordinator
+http://android-developers.blogspot.ro/2015/05/android-design-support-library.html
+https://medium.com/google-developers/why-would-i-want-to-fitssystemwindows-4e26d9ce1eec#.nu252fsqb
+
+Compress images
+https://android-arsenal.com/details/1/3758
+http://square.github.io/picasso/
+
+http://androidannotations.org/
+
+HTTP
+http://www.itsalif.info/content/android-volley-tutorial-http-get-post-put
+https://square.github.io/retrofit/
+
+CHARTS
+https://github.com/HackPlan/AndroidCharts

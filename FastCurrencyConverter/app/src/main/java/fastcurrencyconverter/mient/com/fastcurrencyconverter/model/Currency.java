@@ -10,12 +10,14 @@ public class Currency {
     private String tag;
     private double value;
     private String baseTag;
+    private String date;
 
-    public Currency(String name, String tag, double value, String baseTag) {
+    public Currency(String name, String tag, double value, String baseTag, String date) {
         this.name = name;
         this.tag = tag;
         this.value = value;
         this.baseTag = baseTag;
+        this.date = date;
     }
 
     public String getName() {
@@ -33,6 +35,8 @@ public class Currency {
     public String getBaseTag() {
         return baseTag;
     }
+
+    public String getDate() { return date; }
 
     public String getTagLowercase(){
         return tag.toLowerCase();

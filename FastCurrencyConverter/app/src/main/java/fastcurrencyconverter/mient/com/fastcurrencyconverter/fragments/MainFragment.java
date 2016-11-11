@@ -8,9 +8,9 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
-import java.util.Currency;
 
 import fastcurrencyconverter.mient.com.fastcurrencyconverter.R;
+import fastcurrencyconverter.mient.com.fastcurrencyconverter.model.Currency;
 import fastcurrencyconverter.mient.com.fastcurrencyconverter.services.DataService;
 
 /**
@@ -20,22 +20,28 @@ import fastcurrencyconverter.mient.com.fastcurrencyconverter.services.DataServic
  */
 public class MainFragment extends Fragment {
 
+    private static final String FAVORITE_CURRENCY = "favorite_curr";
+
     private ArrayList<Currency> favoriteCurrencies = new ArrayList<>();
 
     public MainFragment() {
 
     }
 
-    public static MainFragment newInstance() {
+    public static MainFragment newInstance(ArrayList<Currency> favoriteCurrencies) {
         MainFragment fragment = new MainFragment();
-
+        Bundle args = new Bundle();
+        args.putSerializable(FAVORITE_CURRENCY, favoriteCurrencies);
+        fragment.setArguments(args);
         return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        if (getArguments() != null) {
+            favoriteCurrencies = (ArrayList<Currency>) getArguments().getSerializable(FAVORITE_CURRENCY);
+        }
     }
 
     @Override

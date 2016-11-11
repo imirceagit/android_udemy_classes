@@ -96,4 +96,9 @@ public class DataService {
             Log.v("JSONParser", e.getLocalizedMessage());
         }
     }
+
+    public ArrayList<Currency> getTodayCurrencies(){
+        return todayCurrencies;
+    }
+
 }

@@ -11,13 +11,15 @@ public class Currency {
     private double value;
     private String baseTag;
     private String date;
+    private boolean favorite;
 
-    public Currency(String name, String tag, double value, String baseTag, String date) {
+    public Currency(String name, String tag, double value, String baseTag, String date, boolean favorite) {
         this.name = name;
         this.tag = tag;
         this.value = value;
         this.baseTag = baseTag;
         this.date = date;
+        this.favorite = favorite;
     }
 
     public String getName() {
@@ -37,6 +39,8 @@ public class Currency {
     }
 
     public String getDate() { return date; }
+
+    public boolean isFavorite() { return favorite; }
 
     public String getTagLowercase(){
         return tag.toLowerCase();

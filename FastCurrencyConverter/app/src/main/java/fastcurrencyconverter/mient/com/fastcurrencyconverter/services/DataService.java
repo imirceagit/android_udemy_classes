@@ -1,5 +1,6 @@
 package fastcurrencyconverter.mient.com.fastcurrencyconverter.services;
 
+import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.util.Log;
@@ -17,6 +18,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
+import fastcurrencyconverter.mient.com.fastcurrencyconverter.MainActivity;
 import fastcurrencyconverter.mient.com.fastcurrencyconverter.model.Currency;
 
 /**
@@ -38,9 +40,10 @@ public class DataService {
     private final String BASE_URL ="http://api.fixer.io/";
 
     private static DataService instance;
-    private Context context;
+    private MainActivity activity;
 
     private ArrayList<Currency> todayCurrencies = new ArrayList<>();
+    private ArrayList<Currency> favoriteCurrencies = new ArrayList<>();
 
     public static DataService getInstance() {
         if(instance == null){
@@ -53,11 +56,25 @@ public class DataService {
 
     }
 
-    public void init(Context context){
-        this.context = context;
+    public void init(Activity activity){
+        this.activity = (MainActivity) activity;
     }
 
-    public ArrayList<Currency> downloadCurrentValues(String uri){
+    public ArrayList<Currency> getTodayCurrencies(){
+        return todayCurrencies;
+    }
+
+    public ArrayList<Currency> getFavoriteCurrencies(){
+        favoriteCurrencies.clear();
+        for (int i = 0; i < todayCurrencies.size(); i++){
+            if (todayCurrencies.get(i).isFavorite()){
+                favoriteCurrencies.add(todayCurrencies.get(i));
+            }
+        }
+        return favoriteCurrencies;
+    }
+
+    public  ArrayList<Currency> downloadCurrentValues(String uri){
 
         final String url = BASE_URL + uri;
 
@@ -74,7 +91,7 @@ public class DataService {
                     }
                 });
 
-        Volley.newRequestQueue(context).add(jsonObjectRequest);
+        Volley.newRequestQueue(activity.getBaseContext()).add(jsonObjectRequest);
 
         return todayCurrencies;
     }
@@ -89,16 +106,14 @@ public class DataService {
                 String name = names[i];
                 String tag = tags[i];
                 double value = rates.getDouble(tag);
-                todayCurrencies.add(new Currency(name, tag, value, baseTag, date));
+                todayCurrencies.add(new Currency(name, tag, value, baseTag, date, false));
             }
+
+            activity.updateList();
 
         } catch (JSONException e) {
             Log.v("JSONParser", e.getLocalizedMessage());
         }
-    }
-
-    public ArrayList<Currency> getTodayCurrencies(){
-        return todayCurrencies;
     }
 
 }

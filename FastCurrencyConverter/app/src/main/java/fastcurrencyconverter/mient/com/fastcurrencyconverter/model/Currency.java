@@ -42,8 +42,12 @@ public class Currency {
 
     public boolean isFavorite() { return favorite; }
 
-    public String getTagLowercase(){
-        return tag.toLowerCase();
+    public void setFavorite(boolean favorite) {
+        this.favorite = favorite;
+    }
+
+    public String getUri(){
+        return "drawable/" + tag.toLowerCase();
     }
 
     public String getBaseTagLowercase(){

@@ -15,36 +15,36 @@ import fastcurrencyconverter.mient.com.fastcurrencyconverter.model.Currency;
 
 public class FavCurrenciesViewHolder extends RecyclerView.ViewHolder {
 
-    private ImageView currencyIcon;
-    private TextView currencyName;
-    private TextView currencyTag;
-    private CheckBox currencyCheck;
+    private ImageView favCurrencyIcon;
+    private TextView favCurrencyName;
+    private TextView favCurrencyTag;
+    private CheckBox favCurrencyCheck;
 
     public FavCurrenciesViewHolder(View itemView) {
         super(itemView);
 
-        currencyIcon = (ImageView) itemView.findViewById(R.id.currency_icon);
-        currencyName = (TextView) itemView.findViewById(R.id.currency_name);
-        currencyTag = (TextView) itemView.findViewById(R.id.currency_tag);
-        currencyCheck = (CheckBox) itemView.findViewById(R.id.currency_check);
+        favCurrencyIcon = (ImageView) itemView.findViewById(R.id.fav_currency_icon);
+        favCurrencyName = (TextView) itemView.findViewById(R.id.fav_currency_name);
+        favCurrencyTag = (TextView) itemView.findViewById(R.id.fav_currency_tag);
+        favCurrencyCheck = (CheckBox) itemView.findViewById(R.id.fav_currency_check);
     }
 
     public void updateUI(Currency item){
         int resurce;
         if(item.getTag().equals("TRY")){
-            resurce = currencyIcon.getResources()
-                    .getIdentifier(item.getUri() + "t", null, currencyIcon.getContext().getPackageName());
+            resurce = favCurrencyIcon.getResources()
+                    .getIdentifier(item.getUri() + "t", null, favCurrencyIcon.getContext().getPackageName());
         }else {
-            resurce = currencyIcon.getResources()
-                    .getIdentifier(item.getUri(), null, currencyIcon.getContext().getPackageName());
+            resurce = favCurrencyIcon.getResources()
+                    .getIdentifier(item.getUri(), null, favCurrencyIcon.getContext().getPackageName());
         }
-        currencyIcon.setImageResource(resurce);
-        currencyName.setText(item.getName());
-        currencyTag.setText(item.getTag());
-        currencyCheck.setChecked(item.isFavorite());
+        favCurrencyIcon.setImageResource(resurce);
+        favCurrencyName.setText(item.getName());
+        favCurrencyTag.setText(item.getTag());
+        favCurrencyCheck.setChecked(item.isFavorite());
     }
 
     public CheckBox getCurrencyCheck(){
-        return currencyCheck;
+        return favCurrencyCheck;
     }
 }

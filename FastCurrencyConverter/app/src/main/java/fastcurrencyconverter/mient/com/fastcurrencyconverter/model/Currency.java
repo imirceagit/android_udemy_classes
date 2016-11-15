@@ -12,14 +12,16 @@ public class Currency {
     private String baseTag;
     private String date;
     private boolean favorite;
+    private double result;
 
-    public Currency(String name, String tag, double value, String baseTag, String date, boolean favorite) {
+    public Currency(String name, String tag, double value, String baseTag, String date, boolean favorite, double result) {
         this.name = name;
         this.tag = tag;
         this.value = value;
         this.baseTag = baseTag;
         this.date = date;
         this.favorite = favorite;
+        this.result = result;
     }
 
     public String getName() {
@@ -44,6 +46,14 @@ public class Currency {
 
     public void setFavorite(boolean favorite) {
         this.favorite = favorite;
+    }
+
+    public double getResult() {
+        return result;
+    }
+
+    public void setResult(double result) {
+        this.result = result;
     }
 
     public String getUri(){

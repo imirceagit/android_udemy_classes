@@ -102,13 +102,15 @@ public class DataService {
             String date = response.getString("date");
             JSONObject rates = response.getJSONObject("rates");
 
+            todayCurrencies.add(new Currency("Euro", "EUR", 1, baseTag, date, true, 1));
+
             for (int i = 0; i < tags.length; i++){
                 String name = names[i];
                 String tag = tags[i];
                 double value = rates.getDouble(tag);
-                todayCurrencies.add(new Currency(name, tag, value, baseTag, date, false));
+                todayCurrencies.add(new Currency(name, tag, value, baseTag, date, false, value));
             }
-
+            getFavoriteCurrencies();
             activity.updateList();
 
         } catch (JSONException e) {

@@ -2,6 +2,7 @@ package fastcurrencyconverter.mient.com.fastcurrencyconverter.services;
 
 import android.app.Activity;
 import android.content.Context;
+import android.database.Cursor;
 import android.location.Location;
 import android.util.Log;
 
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 
 import fastcurrencyconverter.mient.com.fastcurrencyconverter.MainActivity;
 import fastcurrencyconverter.mient.com.fastcurrencyconverter.model.Currency;
+import fastcurrencyconverter.mient.com.fastcurrencyconverter.model.SQLiteHelper;
 
 /**
  * Created by mircea.ionita on 11/10/2016.
@@ -39,7 +41,9 @@ public class DataService {
 
     private final String BASE_URL ="http://api.fixer.io/";
 
+    private SQLiteHelper dbHelper;
     private static DataService instance;
+
     private MainActivity activity;
 
     private ArrayList<Currency> todayCurrencies = new ArrayList<>();
@@ -58,20 +62,29 @@ public class DataService {
 
     public void init(Activity activity){
         this.activity = (MainActivity) activity;
-    }
-
-    public ArrayList<Currency> getTodayCurrencies(){
-        return todayCurrencies;
+        dbHelper = new SQLiteHelper(activity);
     }
 
     public ArrayList<Currency> getFavoriteCurrencies(){
         favoriteCurrencies.clear();
-        for (int i = 0; i < todayCurrencies.size(); i++){
-            if (todayCurrencies.get(i).isFavorite()){
-                favoriteCurrencies.add(todayCurrencies.get(i));
+        Cursor cursor = dbHelper.getFavoriteCurencies();
+        while (cursor.moveToNext()){
+            for (int i = 0; i < todayCurrencies.size(); i++){
+                if(cursor.getString(1).toLowerCase().equals(todayCurrencies.get(i).getTag().toLowerCase())){
+                    favoriteCurrencies.add(todayCurrencies.get(i));
+                    todayCurrencies.get(i).setFavorite(true);
+                }
             }
         }
         return favoriteCurrencies;
+    }
+
+    public long insertFavCurrency(String tag){
+        return dbHelper.insertFavCurrency(tag);
+    }
+
+    public void clearFavCurrencies(){
+        dbHelper.clearFavoriteTable();
     }
 
     public  ArrayList<Currency> downloadCurrentValues(String uri){
@@ -102,13 +115,13 @@ public class DataService {
             String date = response.getString("date");
             JSONObject rates = response.getJSONObject("rates");
 
-            todayCurrencies.add(new Currency("Euro", "EUR", 1, baseTag, date, true, 1));
+            todayCurrencies.add(new Currency("Euro", "EUR", 1, baseTag, date, false, 0));
 
             for (int i = 0; i < tags.length; i++){
                 String name = names[i];
                 String tag = tags[i];
                 double value = rates.getDouble(tag);
-                todayCurrencies.add(new Currency(name, tag, value, baseTag, date, false, value));
+                todayCurrencies.add(new Currency(name, tag, value, baseTag, date, false, 0));
             }
             getFavoriteCurrencies();
             activity.updateList();

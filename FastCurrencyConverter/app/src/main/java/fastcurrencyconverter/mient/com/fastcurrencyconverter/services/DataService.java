@@ -2,6 +2,7 @@ package fastcurrencyconverter.mient.com.fastcurrencyconverter.services;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.Location;
 import android.util.Log;
@@ -20,6 +21,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 import fastcurrencyconverter.mient.com.fastcurrencyconverter.MainActivity;
+import fastcurrencyconverter.mient.com.fastcurrencyconverter.R;
 import fastcurrencyconverter.mient.com.fastcurrencyconverter.model.Currency;
 import fastcurrencyconverter.mient.com.fastcurrencyconverter.model.SQLiteHelper;
 
@@ -27,6 +29,8 @@ import fastcurrencyconverter.mient.com.fastcurrencyconverter.model.SQLiteHelper;
  * Created by mircea.ionita on 11/10/2016.
  */
 public class DataService {
+
+    private static final String SHARED_PREF_LAST_UPDATE = "SHARED_PREF_LAST_UPDATE";
 
     private String[] tags = {"AUD", "BGN", "BRL", "CAD", "CHF", "CNY", "CZK", "DKK", "GBP", "HKD",
         "HRK", "HUF", "IDR", "ILS", "INR", "JPY", "KRW", "MXN", "MYR", "NOK", "NZD", "PHP", "PLN",
@@ -89,6 +93,14 @@ public class DataService {
 
     public  ArrayList<Currency> downloadCurrentValues(String uri){
 
+        if (getLastUpdate().equals(activity.getLastUpdate())){
+            Log.v("UPDATE", getLastUpdate() + " - " + activity.getLastUpdate());
+            Log.v("UPDATE", "LAST UPDATE");
+        }else {
+            Log.v("UPDATE", getLastUpdate() + " - " + activity.getLastUpdate());
+            Log.v("UPDATE", "NO UPDATE");
+        }
+
         final String url = BASE_URL + uri;
 
         final JsonObjectRequest jsonObjectRequest =
@@ -113,6 +125,7 @@ public class DataService {
         try {
             String baseTag = response.getString("base");
             String date = response.getString("date");
+            setLastUpdate(date);
             JSONObject rates = response.getJSONObject("rates");
 
             todayCurrencies.add(new Currency("Euro", "EUR", 1, baseTag, date, false, 0));
@@ -129,6 +142,19 @@ public class DataService {
         } catch (JSONException e) {
             Log.v("JSONParser", e.getLocalizedMessage());
         }
+    }
+
+    private void setLastUpdate(String date){
+        SharedPreferences sharedPref = activity.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(SHARED_PREF_LAST_UPDATE, date);
+        editor.commit();
+    }
+
+    private String getLastUpdate(){
+        SharedPreferences sharedPref = activity.getPreferences(Context.MODE_PRIVATE);
+        String date = sharedPref.getString(SHARED_PREF_LAST_UPDATE, "");
+        return date;
     }
 
 }

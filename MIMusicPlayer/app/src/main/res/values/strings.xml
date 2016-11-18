@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">MI Music Player</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="lorem">faefds vfdavcdfva dscdcad sacdsca dscasdc faefds vfdavcdfva dscdcad sacdsca dscasdc faefds vfdavcdfva dscdcad sacdsca dscasdc faefds vfdavcdfva dscdcad sacdsca dscasdc faefds vfdavcdfva dscdcad sacdsca dscasdc faefds vfdavcdfva dscdcad sacdsca dscasdcfaefds vfdavcdfva dscdcad sacdsca dscasdc faefds vfdavcdfva dscdcad sacdsca dscasdc faefds vfdavcdfva dscdcad sacdsca dscasdc faefds vfdavcdfva dscdcad sacdsca dscasd cfaefds vfdavcdfva dscdcad sacdsca dscasdcfaefds vfdavcdfva dscdcad sacdsca dscasdc cdfva dscdcad sacdsca dscasdcfaefds vfdavcdfva dscdcad sacdsca dscasdc faefds vfdavcdfva dscdcad sacdsca dscasdc faefds vfdavcdfva dscdcad sacdsca dscasdc faefds vfdavcdfva dscdcad sacdsca dscasd cfaefds vfdavcdfva dscdcad</string>
+    <string name="action_settings">Settings</string>
+</resources>

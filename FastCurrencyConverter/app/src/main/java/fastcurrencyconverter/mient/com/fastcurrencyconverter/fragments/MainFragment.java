@@ -118,7 +118,13 @@ public class MainFragment extends Fragment {
                     amount = 0;
                     amountText.setText("0");
                 }else {
-                    amount = Double.parseDouble(s.toString());
+                    try {
+                        amount = Double.parseDouble(s.toString());
+                    }catch (NumberFormatException e){
+                        Log.v("NUMERIC", e.getLocalizedMessage());
+                        amount = 0;
+                        amountText.setText("0");
+                    }
                     calculate(currencyTagText.getText().toString());
                 }
             }

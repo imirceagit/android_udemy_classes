@@ -1,7 +1,10 @@
 package com.mient.mimusicplayer.mimusicplayer;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -13,7 +16,10 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
+import android.view.DragEvent;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -23,6 +29,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
 import com.mient.mimusicplayer.mimusicplayer.fragments.PlaylistsFragment;
 import com.mient.mimusicplayer.mimusicplayer.fragments.TracksFragment;
@@ -35,6 +44,14 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     final int PERMISION_READ_EXTERNAL_STORAGE = 123;
+
+    boolean layerOpen = false;
+
+    private RelativeLayout playerlayout;
+    private LinearLayout playerActionBar;
+    private ImageButton playerFavorite;
+
+    static Point size;
 
     private static MainActivity mainActivity;
 
@@ -51,6 +68,69 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mainActivity = this;
+
+        playerlayout = (RelativeLayout) findViewById(R.id.player_layout);
+        playerActionBar = (LinearLayout) findViewById(R.id.player_action_bar);
+        playerFavorite = (ImageButton) findViewById(R.id.player_favorite);
+
+        Display display = getWindowManager().getDefaultDisplay();
+        size = new Point();
+        display.getSize(size);
+        int width = size.x;
+        int height = size.y;
+
+        playerlayout.setTranslationY(height - convertDpToPixel(74, this));
+
+        playerlayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(layerOpen){
+                    layerOpen = false;
+                    playerlayout.animate().translationY(size.y - convertDpToPixel(74, mainActivity));
+                }else {
+                    layerOpen = true;
+                    playerlayout.animate().translationY(0);
+                }
+            }
+        });
+
+//        playerlayout.setOnDragListener(new View.OnDragListener() {
+//            @Override
+//            public boolean onDrag(View v, DragEvent event) {
+//
+//                switch(event.getAction()) {
+//                    case DragEvent.ACTION_DRAG_STARTED:
+//                        break;
+//
+//                    case DragEvent.ACTION_DRAG_ENTERED:
+//                        int x_cord = (int) event.getX();
+//                        int y_cord = (int) event.getY();
+//                        playerlayout.animate().translationY(y_cord);
+//                        break;
+//
+//                    case DragEvent.ACTION_DRAG_EXITED :
+//                        x_cord = (int) event.getX();
+//                        y_cord = (int) event.getY();
+//                        playerlayout.animate().translationY(y_cord);
+//                        break;
+//
+//                    case DragEvent.ACTION_DRAG_LOCATION  :
+//                        x_cord = (int) event.getX();
+//                        y_cord = (int) event.getY();
+//                        playerlayout.animate().translationY(y_cord);
+//                        break;
+//
+//                    case DragEvent.ACTION_DRAG_ENDED   :
+//                        break;
+//
+//                    case DragEvent.ACTION_DROP:
+//                        break;
+//
+//                    default: break;
+//                }
+//                return true;
+//            }
+//        });
 
         tracksService = TracksService.getInstance();
 
@@ -82,6 +162,20 @@ public class MainActivity extends AppCompatActivity
 
     public void updateAllTracksList(){
         tracksFragment.updateList();
+    }
+
+    public static float convertPixelsToDp(float px, Context context){
+        Resources resources = context.getResources();
+        DisplayMetrics metrics = resources.getDisplayMetrics();
+        float dp = px / ((float)metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
+        return dp;
+    }
+
+    public static float convertDpToPixel(float dp, Context context){
+        Resources resources = context.getResources();
+        DisplayMetrics metrics = resources.getDisplayMetrics();
+        float px = dp * ((float)metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
+        return px;
     }
 
     public static MainActivity getMainActivity(){

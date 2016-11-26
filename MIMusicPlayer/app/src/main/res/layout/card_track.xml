@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:background="#124582"
+    android:background="@color/colorPrimaryDark"
     android:layout_height="55dp">
 
 
@@ -12,7 +12,7 @@
         android:layout_height="0dp"
         android:gravity="center_vertical"
         android:textSize="16sp"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/textColor"
         android:text="3:45"
         android:id="@+id/list_song_time"
         tools:layout_constraintTop_creator="1"
@@ -36,18 +36,33 @@
         android:layout_marginRight="8dp"
         android:id="@+id/imageView2" />
 
+    <ImageView
+        android:id="@+id/list_song_album_art"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:src="@drawable/ic_music_video_white_48dp"
+        android:scaleX="0.8"
+        android:scaleY="0.8"
+        tools:layout_constraintTop_creator="1"
+        tools:layout_constraintBottom_creator="1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp" />
+
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="5dp"
-        android:layout_marginBottom="5dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
         app:layout_constraintRight_toLeftOf="@+id/list_song_time"
-        android:layout_marginStart="8dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        android:layout_marginLeft="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="8dp"
+        app:layout_constraintLeft_toRightOf="@+id/list_song_album_art"
+        android:layout_marginLeft="8dp">
 
         <TextView
             android:id="@+id/list_song_artist"
@@ -55,7 +70,7 @@
             android:layout_height="wrap_content"
             android:textSize="16sp"
             android:text="Lifehouse"
-            android:textColor="#FFFFFF"/>
+            android:textColor="@color/textColor"/>
 
         <TextView
             android:id="@+id/list_song_title"
@@ -63,7 +78,7 @@
             android:layout_height="wrap_content"
             android:textSize="14sp"
             android:text="Trust in me"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/textColor"
             android:layout_marginTop="2dp" />
 
     </LinearLayout>

@@ -2,13 +2,16 @@ package com.mient.mimusicplayer.mimusicplayer;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.Point;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -16,10 +19,10 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Display;
-import android.view.DragEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -29,104 +32,214 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.mient.mimusicplayer.mimusicplayer.fragments.PlaylistsFragment;
 import com.mient.mimusicplayer.mimusicplayer.fragments.TracksFragment;
+import com.mient.mimusicplayer.mimusicplayer.model.Player;
 import com.mient.mimusicplayer.mimusicplayer.model.Song;
 import com.mient.mimusicplayer.mimusicplayer.services.TracksService;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Handler;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    //Permisions
     final int PERMISION_READ_EXTERNAL_STORAGE = 123;
 
-    boolean layerOpen = false;
+    //Enums
+    public enum LayoutState {
+        COLLAPSED, EXPANDED
+    }
 
-    private RelativeLayout playerlayout;
-    private LinearLayout playerActionBar;
-    private ImageButton playerFavorite;
+    public static MainActivity mainActivity;
 
-    static Point size;
+    public static ArrayList<Song> allTracksList = new ArrayList<>();
 
-    private static MainActivity mainActivity;
+    //MainActivity Widgets - player Action Bar
+    private LinearLayout playerLayout;
+    private LayoutState playerLayoutState;
+    private ConstraintLayout playerActionBar;
+    private TextView playerActionBarArtist;
+    private TextView playerActionBarTitle;
+    private ImageButton playerActionBarPlay;
 
-    private TracksFragment tracksFragment = TracksFragment.newInstance();
+    //MainActivity Widgets - player
+    private ImageButton playerShuffleButton;
+    private ImageButton playerPrevButton;
+    private ImageButton playerPlayButton;
+    private ImageButton playerNextButton;
+    private ImageButton playerRepeatButton;
+    private ProgressBar playerProgressBar;
+    private TextView playerPassedTime;
+    private TextView playerFullTime;
 
-    private ArrayList<Song> allTracksList = new ArrayList<>();
+    //Contentresolver for Media
+    private TracksService tracksService;
 
-    TracksService tracksService;
+    //Player Instance
+    private Player musicPlayer;
+
+    private TracksFragment tracksFragment;
+
+    //SharedPreferences
+    SharedPreferences sharedPref;
+    private boolean playerShuffle;
+    private int playerRepeat;
+    private long playerAudioId;
+
+    //MusicPlayer
+    private static ArrayList<Song> currentSongList;
+    private static int currentSongPositionInCurrentSongList;
+
+    //Tabs Utils
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
+
+    //Utils
+    int displayHeight;
+    int displayWidth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mainActivity = this;
+        getDisplaySize();
+        sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        musicPlayer = Player.getInstance();
 
-        playerlayout = (RelativeLayout) findViewById(R.id.player_layout);
-        playerActionBar = (LinearLayout) findViewById(R.id.player_action_bar);
-        playerFavorite = (ImageButton) findViewById(R.id.player_favorite);
+        tracksFragment = TracksFragment.newInstance();
 
-        Display display = getWindowManager().getDefaultDisplay();
-        size = new Point();
-        display.getSize(size);
-        int width = size.x;
-        int height = size.y;
+        if(sharedPref.contains(getString(R.string.mi_music_player_shuffle)) && sharedPref.contains(getString(R.string.mi_music_player_repeat)) && sharedPref.contains(getString(R.string.mi_music_player_last_track))){
+            getPreferences();
+        }else {
+            initPreferences();
+        }
 
-        playerlayout.setTranslationY(height - convertDpToPixel(74, this));
+        musicPlayer.init(allTracksList, 0, 0, Player.PLAYER_STOP, playerShuffle, playerRepeat);
 
-        playerlayout.setOnClickListener(new View.OnClickListener() {
+        playerLayout = (LinearLayout) findViewById(R.id.player_layout);
+        playerActionBar = (ConstraintLayout) findViewById(R.id.player_action_bar);
+        playerActionBarArtist = (TextView) findViewById(R.id.player_action_bar_artist);
+        playerActionBarTitle = (TextView) findViewById(R.id.player_action_bar_title);
+        playerActionBarPlay = (ImageButton) findViewById(R.id.player_action_bar_play);
+
+        playerPassedTime = (TextView) findViewById(R.id.player_passed_time);
+        playerFullTime = (TextView) findViewById(R.id.player_full_time);
+        playerShuffleButton = (ImageButton) findViewById(R.id.player_shuffle_button);
+        playerPrevButton = (ImageButton) findViewById(R.id.player_prev_button);
+        playerPlayButton = (ImageButton) findViewById(R.id.player_play_button);
+        playerNextButton = (ImageButton) findViewById(R.id.player_next_button);
+        playerRepeatButton = (ImageButton) findViewById(R.id.player_repeat_button);
+        playerProgressBar = (ProgressBar) findViewById(R.id.player_progress_bar);
+        playerProgressBar.getProgressDrawable().setColorFilter( Color.parseColor("#FF601C"), android.graphics.PorterDuff.Mode.SRC_IN);
+        playerProgressBar.setScaleY(2f);
+        playerProgressBar.setProgress(50);
+
+        playerLayout.setTranslationY(displayHeight - convertDpToPixel(74, mainActivity));
+        playerLayoutState = LayoutState.COLLAPSED;
+
+        playerLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(layerOpen){
-                    layerOpen = false;
-                    playerlayout.animate().translationY(size.y - convertDpToPixel(74, mainActivity));
-                }else {
-                    layerOpen = true;
-                    playerlayout.animate().translationY(0);
+
+            }
+        });
+
+        playerActionBar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(playerLayoutState == LayoutState.COLLAPSED){
+                    playerLayout.animate().translationY(0);
+                    playerLayoutState = LayoutState.EXPANDED;
+                    playerActionBarPlay.setVisibility(View.INVISIBLE);
+                }else if(playerLayoutState == LayoutState.EXPANDED){
+                    playerLayout.animate().translationY(displayHeight - convertDpToPixel(74, mainActivity));
+                    playerLayoutState = LayoutState.COLLAPSED;
+                    playerActionBarPlay.setVisibility(View.VISIBLE);
                 }
             }
         });
 
-//        playerlayout.setOnDragListener(new View.OnDragListener() {
+        playerShuffleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                musicPlayer.shuffle();
+
+            }
+        });
+
+        playerRepeatButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                musicPlayer.repeat();
+            }
+        });
+
+        playerPlayButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                musicPlayer.play();
+            }
+        });
+
+        playerPrevButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                musicPlayer.prev();
+            }
+        });
+
+        playerNextButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                musicPlayer.next();
+            }
+        });
+
+        playerActionBarPlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                musicPlayer.play();
+            }
+        });
+
+//        playerActionBar.setOnTouchListener(new View.OnTouchListener() {
+//
+//            float xCoOrdinate;
+//            float yCoOrdinate;
+//
 //            @Override
-//            public boolean onDrag(View v, DragEvent event) {
-//
-//                switch(event.getAction()) {
-//                    case DragEvent.ACTION_DRAG_STARTED:
+//            public boolean onTouch(View view, MotionEvent event) {
+//                switch (event.getActionMasked()) {
+//                    case MotionEvent.ACTION_DOWN:
+//                        xCoOrdinate = playerLayout.getX() - event.getRawX();
+//                        yCoOrdinate = playerLayout.getY() - event.getRawY();
 //                        break;
-//
-//                    case DragEvent.ACTION_DRAG_ENTERED:
-//                        int x_cord = (int) event.getX();
-//                        int y_cord = (int) event.getY();
-//                        playerlayout.animate().translationY(y_cord);
+//                    case MotionEvent.ACTION_MOVE:
+//                        if(playerLayoutState == LayoutState.COLLAPSED && ((event.getRawY() + yCoOrdinate) < displayHeight / 2)){
+//                            playerLayout.animate().translationY(0);
+//                            playerLayoutState = LayoutState.EXPANDED;
+//                            playerActionBarPlay.setVisibility(View.INVISIBLE);
+//                        }
 //                        break;
-//
-//                    case DragEvent.ACTION_DRAG_EXITED :
-//                        x_cord = (int) event.getX();
-//                        y_cord = (int) event.getY();
-//                        playerlayout.animate().translationY(y_cord);
-//                        break;
-//
-//                    case DragEvent.ACTION_DRAG_LOCATION  :
-//                        x_cord = (int) event.getX();
-//                        y_cord = (int) event.getY();
-//                        playerlayout.animate().translationY(y_cord);
-//                        break;
-//
-//                    case DragEvent.ACTION_DRAG_ENDED   :
-//                        break;
-//
-//                    case DragEvent.ACTION_DROP:
-//                        break;
-//
-//                    default: break;
+//                    case MotionEvent.ACTION_UP:
+//                        if(playerLayoutState == LayoutState.COLLAPSED && ((event.getRawY() + yCoOrdinate) > displayHeight / 2)){
+//                            playerLayout.animate().translationY(displayHeight - convertDpToPixel(74, mainActivity));
+//                            playerLayoutState = LayoutState.COLLAPSED;
+//                            playerActionBarPlay.setVisibility(View.VISIBLE);
+//                        }
+//                    default:
+//                        return false;
 //                }
 //                return true;
 //            }
@@ -158,36 +271,118 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        updatePlayerUI();
     }
 
-    public void updateAllTracksList(){
-        tracksFragment.updateList();
+    private void setTracksToPlayer(){
+        if(currentSongList != null && currentSongList.size() > 0 && currentSongPositionInCurrentSongList >= 0){
+            musicPlayer.setPlayingList(currentSongList);
+            musicPlayer.setCurrentPlaying(currentSongPositionInCurrentSongList);
+            musicPlayer.setProgress(0);
+            musicPlayer.setPlayerState(Player.PLAYER_PAUSE);
+        }
+        musicPlayer.play();
+        updatePlayerUI();
     }
 
-    public static float convertPixelsToDp(float px, Context context){
+    public void setCurrentTrack(ArrayList<Song> songList, int position){
+        currentSongList = songList;
+        currentSongPositionInCurrentSongList = position;
+        setTracksToPlayer();
+    }
+
+    public void updatePlayerUI(){
+
+        playerActionBarArtist.setText(musicPlayer.getCurrentPlayingForUI().getArtist());
+        playerActionBarTitle.setText(musicPlayer.getCurrentPlayingForUI().getTitle());
+        playerFullTime.setText(String.format("%d: %d",
+                TimeUnit.MILLISECONDS.toMinutes(musicPlayer.getCurrentPlayingForUI().getTime()),
+                TimeUnit.MILLISECONDS.toSeconds(musicPlayer.getCurrentPlayingForUI().getTime()) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.
+                                toMinutes(musicPlayer.getCurrentPlayingForUI().getTime()))));
+
+        if(musicPlayer.isShuffle()){
+            playerShuffleButton.setImageResource(R.drawable.ic_shuffle_orange_48dp);
+        }else {
+            playerShuffleButton.setImageResource(R.drawable.ic_shuffle_white_48dp);
+        }
+
+        switch (musicPlayer.getRepeat()){
+            case Player.REPEAT_ALL: playerRepeatButton.setImageResource(R.drawable.ic_repeat_orange_48dp);
+                break;
+            case Player.REPEAT_ONE: playerRepeatButton.setImageResource(R.drawable.ic_repeat_one_orange_48dp);
+                break;
+            case Player.REPEAT_OFF:
+            default:
+                playerRepeatButton.setImageResource(R.drawable.ic_repeat_white_48dp);
+        }
+
+        switch (musicPlayer.getPlayerState()){
+            case Player.PLAYER_PLAY:
+                playerPlayButton.setImageResource(R.drawable.ic_pause_white_48dp);
+                playerActionBarPlay.setImageResource(R.drawable.ic_pause_white_48dp);
+                break;
+            case Player.PLAYER_PAUSE:
+            case Player.PLAYER_STOP:
+            default:
+                playerPlayButton.setImageResource(R.drawable.ic_play_arrow_white_48dp);
+                playerActionBarPlay.setImageResource(R.drawable.ic_play_arrow_white_48dp);
+        }
+    }
+
+    private void initPreferences(){
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putBoolean(getString(R.string.mi_music_player_shuffle), false);
+        editor.putInt(getString(R.string.mi_music_player_repeat), Player.REPEAT_OFF);
+        editor.putLong(getString(R.string.mi_music_player_last_track), 0);
+        editor.commit();
+    }
+
+    private void savePreferences(){
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putBoolean(getString(R.string.mi_music_player_shuffle), musicPlayer.isShuffle());
+        editor.putInt(getString(R.string.mi_music_player_repeat), musicPlayer.getRepeat());
+        editor.putLong(getString(R.string.mi_music_player_last_track), musicPlayer.getLastTrackAudioId());
+        editor.commit();
+    }
+
+    private void getPreferences(){
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        playerShuffle = sharedPref.getBoolean(getString(R.string.mi_music_player_shuffle), false);
+        playerRepeat = sharedPref.getInt(getString(R.string.mi_music_player_repeat), Player.REPEAT_OFF);
+        playerAudioId = sharedPref.getLong(getString(R.string.mi_music_player_last_track), 0);
+    }
+
+    public static void displayToast(String message){
+        Context context = MainActivity.mainActivity;
+        CharSequence text = message;
+        int duration = Toast.LENGTH_SHORT;
+        Toast toast = Toast.makeText(context, text, duration);
+        toast.show();
+    }
+
+    private void getDisplaySize(){
+        Display display = getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        displayHeight = size.y;
+        displayWidth = size.x;
+    }
+
+    private float convertPixelsToDp(float px, Context context){
         Resources resources = context.getResources();
         DisplayMetrics metrics = resources.getDisplayMetrics();
         float dp = px / ((float)metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
         return dp;
     }
 
-    public static float convertDpToPixel(float dp, Context context){
+    private float convertDpToPixel(float dp, Context context){
         Resources resources = context.getResources();
         DisplayMetrics metrics = resources.getDisplayMetrics();
         float px = dp * ((float)metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
         return px;
-    }
-
-    public static MainActivity getMainActivity(){
-        return mainActivity;
-    }
-
-    public ArrayList<Song> getAllTracksList() {
-        return allTracksList;
-    }
-
-    public void setAlltracksList(ArrayList<Song> list){
-        allTracksList = list;
     }
 
     @Override
@@ -210,7 +405,7 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
-        } else {
+        }else {
             super.onBackPressed();
         }
     }

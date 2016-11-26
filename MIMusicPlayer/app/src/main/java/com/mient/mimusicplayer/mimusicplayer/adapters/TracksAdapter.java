@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.mient.mimusicplayer.mimusicplayer.MainActivity;
 import com.mient.mimusicplayer.mimusicplayer.R;
 import com.mient.mimusicplayer.mimusicplayer.holders.TrackViewHolder;
 import com.mient.mimusicplayer.mimusicplayer.model.Song;
@@ -17,7 +18,9 @@ import java.util.ArrayList;
 
 public class TracksAdapter extends RecyclerView.Adapter<TrackViewHolder> {
 
-    ArrayList<Song> songList = new ArrayList<Song>();
+    private MainActivity activity = MainActivity.mainActivity;
+
+    private static ArrayList<Song> songList = new ArrayList<Song>();
 
     public TracksAdapter(ArrayList<Song> songList) {
         this.songList = songList;
@@ -32,13 +35,13 @@ public class TracksAdapter extends RecyclerView.Adapter<TrackViewHolder> {
     @Override
     public void onBindViewHolder(TrackViewHolder holder, int position) {
         final Song song = songList.get(position);
-
+        final int currentPosition = position;
         holder.updateUI(song);
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                activity.setCurrentTrack(songList, currentPosition);
             }
         });
     }

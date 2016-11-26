@@ -7,6 +7,9 @@ import android.widget.TextView;
 import com.mient.mimusicplayer.mimusicplayer.R;
 import com.mient.mimusicplayer.mimusicplayer.model.Song;
 
+import java.text.SimpleDateFormat;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Created by mircea.ionita on 11/21/2016.
  */
@@ -28,6 +31,11 @@ public class TrackViewHolder extends RecyclerView.ViewHolder {
     public void updateUI(Song song){
         listSongArtist.setText(song.getArtist());
         listSongTitle.setText(song.getTitle());
-        listSongTime.setText(song.getTime());
+        listSongTime.setText(String.format("%d: %d",
+                TimeUnit.MILLISECONDS.toMinutes(song.getTime()),
+                TimeUnit.MILLISECONDS.toSeconds(song.getTime()) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.
+                                toMinutes(song.getTime()))));
+
     }
 }

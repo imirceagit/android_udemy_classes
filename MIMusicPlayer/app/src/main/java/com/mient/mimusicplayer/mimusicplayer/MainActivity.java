@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
@@ -31,6 +33,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -61,14 +64,18 @@ public class MainActivity extends AppCompatActivity
     public static ArrayList<Song> allTracksList = new ArrayList<>();
 
     //MainActivity Widgets - player Action Bar
+    private BitmapFactory.Options options;
+
     private LinearLayout playerLayout;
     private LayoutState playerLayoutState;
     private ConstraintLayout playerActionBar;
+    private ImageView playerActionBarAlbumArt;
     private TextView playerActionBarArtist;
     private TextView playerActionBarTitle;
     private ImageButton playerActionBarPlay;
 
     //MainActivity Widgets - player
+    private ImageView playerAlbumArt;
     private ImageButton playerShuffleButton;
     private ImageButton playerPrevButton;
     private ImageButton playerPlayButton;
@@ -126,11 +133,13 @@ public class MainActivity extends AppCompatActivity
 
         playerLayout = (LinearLayout) findViewById(R.id.player_layout);
         playerActionBar = (ConstraintLayout) findViewById(R.id.player_action_bar);
+        playerActionBarAlbumArt = (ImageView) findViewById(R.id.player_action_bar_album_art);
         playerActionBarArtist = (TextView) findViewById(R.id.player_action_bar_artist);
         playerActionBarTitle = (TextView) findViewById(R.id.player_action_bar_title);
         playerActionBarPlay = (ImageButton) findViewById(R.id.player_action_bar_play);
 
         playerPassedTime = (TextView) findViewById(R.id.player_passed_time);
+        playerAlbumArt = (ImageView) findViewById(R.id.player_album_art);
         playerFullTime = (TextView) findViewById(R.id.player_full_time);
         playerShuffleButton = (ImageButton) findViewById(R.id.player_shuffle_button);
         playerPrevButton = (ImageButton) findViewById(R.id.player_prev_button);
@@ -342,7 +351,17 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void updatePlayerUI(){
-
+//        options = new BitmapFactory.Options();
+//        options.inSampleSize = 8;
+//        if(musicPlayer.getCurrentPlayingForUI().getCoverArtPath() == null){
+//            playerAlbumArt.setImageResource(R.drawable.ic_music_video_black_48dp);
+//            playerActionBarAlbumArt.setImageResource(R.drawable.ic_music_video_black_48dp);
+//        }
+//        else {
+//            final Bitmap b = BitmapFactory.decodeFile(musicPlayer.getCurrentPlayingForUI().getCoverArtPath(), options);
+//            playerAlbumArt.setImageBitmap(b);
+//            playerActionBarAlbumArt.setImageBitmap(b);
+//        }
         playerActionBarArtist.setText(musicPlayer.getCurrentPlayingForUI().getArtist());
         playerActionBarTitle.setText(musicPlayer.getCurrentPlayingForUI().getTitle());
         playerFullTime.setText(String.format("%02d:%02d",

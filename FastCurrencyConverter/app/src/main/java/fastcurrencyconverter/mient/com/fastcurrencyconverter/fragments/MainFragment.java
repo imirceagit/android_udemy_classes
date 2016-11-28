@@ -96,7 +96,9 @@ public class MainFragment extends Fragment {
         });
 
         adapter = new CurrenciesAdaptor(favoriteCurrencies);
-
+        if(favoriteCurrencies != null && favoriteCurrencies.size() > 0){
+            activity.selectCurrency(favoriteCurrencies.get(0));
+        }
         RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.recycler_currencies);
         recyclerView.setHasFixedSize(true);
         recyclerView.addItemDecoration(new VerticalSpaceItemDecorator(2));

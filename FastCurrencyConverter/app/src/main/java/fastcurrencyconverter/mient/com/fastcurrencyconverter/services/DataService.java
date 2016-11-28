@@ -80,6 +80,9 @@ public class DataService {
                 }
             }
         }
+        if(favoriteCurrencies != null && favoriteCurrencies.size() > 0){
+            activity.selectCurrency(favoriteCurrencies.get(0));
+        }
         return favoriteCurrencies;
     }
 

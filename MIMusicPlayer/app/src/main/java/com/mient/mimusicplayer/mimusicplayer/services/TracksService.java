@@ -44,7 +44,7 @@ public class TracksService {
             MainActivity.displayToast("No media found.");
         } else {
             int idColumn = cursor.getColumnIndex(MediaStore.Audio.Media._ID);
-//            int audioIdColumn = cursor.getColumnIndex(MediaStore.Audio.Playlists.Members.AUDIO_ID);
+            int audioIdColumn = cursor.getColumnIndex(MediaStore.Audio.Playlists.Members.AUDIO_ID);
             int artistColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
             int albumIdColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
             int albumColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM);
@@ -52,9 +52,9 @@ public class TracksService {
             int titleColumn = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
 
             do {
-//                long albumId = Long.getLong(cursor.getString(albumIdColumn));
+                long albumId = Long.parseLong((cursor.getString(albumIdColumn) == null ? "0" : cursor.getString(albumIdColumn)));
                 MainActivity.allTracksList.add(new Song(cursor.getLong(idColumn), cursor.getLong(idColumn), cursor.getString(titleColumn),
-                        cursor.getString(artistColumn), 1, cursor.getString(albumColumn),
+                        cursor.getString(artistColumn), albumId, cursor.getString(albumColumn), getCoverArtPath(albumId),
                         cursor.getLong(durationColumn), ContentUris.withAppendedId(
                         android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, cursor.getLong(idColumn)),
                                 false));
@@ -76,7 +76,6 @@ public class TracksService {
             result = albumCursor.getString(0);
         }
         albumCursor.close();
-        Log.v("ALBUM", result);
         return result;
     }
 }

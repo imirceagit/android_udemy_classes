@@ -18,6 +18,8 @@ public class Song {
     private Uri uri;
     private boolean favorite;
 
+    private String coverArtPath;
+
     public Song(long id, long audioId, String title, String artist, long albumId, String album, long time, Uri uri, boolean favorite) {
         this.id = id;
         this.audioId = audioId;
@@ -25,6 +27,19 @@ public class Song {
         this.artist = artist;
         this.albumId = albumId;
         this.album = album;
+        this.time = time;
+        this.uri = uri;
+        this.favorite = favorite;
+    }
+
+    public Song(long id, long audioId, String title, String artist, long albumId, String album, String coverArtPath, long time, Uri uri, boolean favorite) {
+        this.id = id;
+        this.audioId = audioId;
+        this.title = title;
+        this.artist = artist;
+        this.albumId = albumId;
+        this.album = album;
+        this.coverArtPath = coverArtPath;
         this.time = time;
         this.uri = uri;
         this.favorite = favorite;
@@ -99,5 +114,13 @@ public class Song {
 
     public void setFavorite(boolean favorite) {
         this.favorite = favorite;
+    }
+
+    public String getCoverArtPath() {
+        return coverArtPath;
+    }
+
+    public void setCoverArtPath(String coverArtPath) {
+        this.coverArtPath = coverArtPath;
     }
 }

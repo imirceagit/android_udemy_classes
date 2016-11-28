@@ -1,11 +1,13 @@
 package com.mient.mimusicplayer.mimusicplayer.model;
 
 import android.media.MediaPlayer;
+import android.util.Log;
 
 import com.mient.mimusicplayer.mimusicplayer.MainActivity;
 import com.mient.mimusicplayer.mimusicplayer.services.MediaPlayerService;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * Created by mircea.ionita on 11/24/2016.
@@ -80,6 +82,7 @@ public class Player{
 
     public void playCurrent(){
         mediaPlayerService.play(playingList.get(currentPlaying));
+        activity.updatePlayerUI();
     }
 
 
@@ -88,11 +91,17 @@ public class Player{
     }
 
     public void stop(){
+        setPlayerState(PLAYER_STOP);
         mediaPlayerService.stop();
+        activity.updatePlayerUI();
     }
 
     public void prev(){
-        if(currentPlaying > 0 ){
+        Random r = new Random();
+        if(isShuffle()){
+            int rand = r.nextInt(playingList.size());
+            currentPlaying = rand;
+        }else if(currentPlaying > 0 ){
             currentPlaying--;
         }else if (currentPlaying == 0){
             currentPlaying = playingList.size() - 1;
@@ -103,7 +112,11 @@ public class Player{
     }
 
     public void next(){
-        if(currentPlaying < playingList.size() - 1 ){
+        Random r = new Random();
+        if(isShuffle()){
+            int rand = r.nextInt(playingList.size());
+            currentPlaying = rand;
+        }else if(currentPlaying < playingList.size() - 1 ){
             currentPlaying++;
         }else if (currentPlaying == playingList.size() - 1){
             currentPlaying = 0;
@@ -119,23 +132,40 @@ public class Player{
             setShuffle(false);
         }else{
             setShuffle(true);
+            setRepeat(Player.REPEAT_OFF);
         }
         activity.updatePlayerUI();
     }
 
     public void repeat(){
         switch (getRepeat()){
-            case Player.REPEAT_ALL: setRepeat(Player.REPEAT_ONE);
+            case Player.REPEAT_ALL:
+                setRepeat(Player.REPEAT_ONE);
+                setShuffle(false);
                 break;
-            case Player.REPEAT_ONE: setRepeat(Player.REPEAT_OFF);
+            case Player.REPEAT_ONE:
+                setRepeat(Player.REPEAT_OFF);
                 break;
-            case Player.REPEAT_OFF: setRepeat(Player.REPEAT_ALL);
+            case Player.REPEAT_OFF:
+                setRepeat(Player.REPEAT_ALL);
+                setShuffle(false);
                 break;
             default:
                 setRepeat(Player.REPEAT_OFF);
         }
         activity.updatePlayerUI();
     }
+
+    public void seekMusic(int progress){
+        setProgress(progress);
+        mediaPlayerService.seek(progress);
+
+    }
+
+    public long getMusicTime(){
+        return playingList.get(currentPlaying).getTime();
+    }
+
 
     public long getLastTrackAudioId(){
         long audioId = 0;
@@ -163,6 +193,7 @@ public class Player{
     }
 
     public int getProgress() {
+        progress = mediaPlayerService.getProgress();
         return progress;
     }
 

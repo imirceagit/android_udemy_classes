@@ -199,7 +199,7 @@
                     android:src="@drawable/ic_repeat_orange_48dp"/>
             </LinearLayout>
 
-            <ProgressBar
+            <SeekBar
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="0dp"
                 android:layout_height="30dp"

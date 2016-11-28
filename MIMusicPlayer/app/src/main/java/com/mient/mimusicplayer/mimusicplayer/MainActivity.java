@@ -7,9 +7,8 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Point;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.TabLayout;
@@ -19,10 +18,9 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
-import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
-import android.view.MotionEvent;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -32,10 +30,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,7 +44,6 @@ import com.mient.mimusicplayer.mimusicplayer.services.TracksService;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Handler;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -78,7 +74,7 @@ public class MainActivity extends AppCompatActivity
     private ImageButton playerPlayButton;
     private ImageButton playerNextButton;
     private ImageButton playerRepeatButton;
-    private ProgressBar playerProgressBar;
+    private SeekBar playerProgressBar;
     private TextView playerPassedTime;
     private TextView playerFullTime;
 
@@ -97,6 +93,7 @@ public class MainActivity extends AppCompatActivity
     private long playerAudioId;
 
     //MusicPlayer
+    private Handler durationHandler = new Handler();
     private static ArrayList<Song> currentSongList;
     private static int currentSongPositionInCurrentSongList;
 
@@ -140,13 +137,36 @@ public class MainActivity extends AppCompatActivity
         playerPlayButton = (ImageButton) findViewById(R.id.player_play_button);
         playerNextButton = (ImageButton) findViewById(R.id.player_next_button);
         playerRepeatButton = (ImageButton) findViewById(R.id.player_repeat_button);
-        playerProgressBar = (ProgressBar) findViewById(R.id.player_progress_bar);
+        playerProgressBar = (SeekBar) findViewById(R.id.player_progress_bar);
         playerProgressBar.getProgressDrawable().setColorFilter( Color.parseColor("#FF601C"), android.graphics.PorterDuff.Mode.SRC_IN);
         playerProgressBar.setScaleY(2f);
-        playerProgressBar.setProgress(50);
 
         playerLayout.setTranslationY(displayHeight - convertDpToPixel(74, mainActivity));
         playerLayoutState = LayoutState.COLLAPSED;
+
+        playerProgressBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if(fromUser){
+                    musicPlayer.seekMusic((int) (musicPlayer.getMusicTime() * progress/100));
+                    playerPassedTime.setText(String.format("%02d:%02d",
+                            TimeUnit.MILLISECONDS.toMinutes((musicPlayer.getMusicTime() * progress/100)),
+                            TimeUnit.MILLISECONDS.toSeconds((musicPlayer.getMusicTime() * progress/100)) -
+                                    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.
+                                            toMinutes((musicPlayer.getMusicTime() * progress/100)))));
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
 
         playerLayout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -174,7 +194,6 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 musicPlayer.shuffle();
-
             }
         });
 
@@ -189,6 +208,11 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 musicPlayer.play();
+                if(musicPlayer.getPlayerState() == Player.PLAYER_PAUSE){
+                    durationHandler.removeCallbacks(updateSeekBarTime);
+                }else if(musicPlayer.getPlayerState() == Player.PLAYER_PLAY){
+                    durationHandler.postDelayed(updateSeekBarTime, 100);
+                }
             }
         });
 
@@ -210,6 +234,11 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 musicPlayer.play();
+                if(musicPlayer.getPlayerState() == Player.PLAYER_PAUSE){
+                    durationHandler.removeCallbacks(updateSeekBarTime);
+                }else if(musicPlayer.getPlayerState() == Player.PLAYER_PLAY){
+                    durationHandler.postDelayed(updateSeekBarTime, 100);
+                }
             }
         });
 
@@ -275,6 +304,26 @@ public class MainActivity extends AppCompatActivity
         updatePlayerUI();
     }
 
+    private Runnable updateSeekBarTime = new Runnable() {
+        public void run() {
+            playerPassedTime.setText(String.format("%02d:%02d",
+                    TimeUnit.MILLISECONDS.toMinutes(musicPlayer.getProgress()),
+                    TimeUnit.MILLISECONDS.toSeconds(musicPlayer.getProgress()) -
+                            TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.
+                                    toMinutes(musicPlayer.getProgress()))));
+            playerProgressBar.setProgress((musicPlayer.getProgress() * 100) / (int) musicPlayer.getMusicTime());
+            durationHandler.postDelayed(this, 100);
+        }
+    };
+
+    public void stopProgressBarUpdate(){
+        durationHandler.removeCallbacks(updateSeekBarTime);
+    }
+
+    public void setProgressOnSeekbar(){
+        durationHandler.postDelayed(updateSeekBarTime, 100);
+    }
+
     private void setTracksToPlayer(){
         if(currentSongList != null && currentSongList.size() > 0 && currentSongPositionInCurrentSongList >= 0){
             musicPlayer.setPlayingList(currentSongList);
@@ -296,7 +345,7 @@ public class MainActivity extends AppCompatActivity
 
         playerActionBarArtist.setText(musicPlayer.getCurrentPlayingForUI().getArtist());
         playerActionBarTitle.setText(musicPlayer.getCurrentPlayingForUI().getTitle());
-        playerFullTime.setText(String.format("%d: %d",
+        playerFullTime.setText(String.format("%02d:%02d",
                 TimeUnit.MILLISECONDS.toMinutes(musicPlayer.getCurrentPlayingForUI().getTime()),
                 TimeUnit.MILLISECONDS.toSeconds(musicPlayer.getCurrentPlayingForUI().getTime()) -
                         TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.
@@ -328,6 +377,10 @@ public class MainActivity extends AppCompatActivity
             default:
                 playerPlayButton.setImageResource(R.drawable.ic_play_arrow_white_48dp);
                 playerActionBarPlay.setImageResource(R.drawable.ic_play_arrow_white_48dp);
+        }
+
+        if(musicPlayer.getPlayerState() == Player.PLAYER_STOP){
+            playerProgressBar.setProgress(0);
         }
     }
 

@@ -15,6 +15,7 @@ import com.mient.mimusicplayer.mimusicplayer.model.Player;
 import com.mient.mimusicplayer.mimusicplayer.model.Song;
 
 import java.io.IOException;
+import java.util.Random;
 
 /**
  * Created by mircea.ionita on 11/25/2016.
@@ -42,6 +43,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
         }
         mMediaPlayer.setWakeMode(activity.getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
         mMediaPlayer.setOnPreparedListener(this);
+        mMediaPlayer.setOnCompletionListener(this);
         mMediaPlayer.prepareAsync();
         mMediaPlayer.setOnErrorListener(this);
     }
@@ -69,6 +71,16 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
         clearMediaPlayer();
     }
 
+    public void seek(int progress){
+        if(mMediaPlayer != null) {
+            mMediaPlayer.seekTo(progress);
+        }
+    }
+
+    public int getProgress(){
+        return mMediaPlayer.getCurrentPosition();
+    }
+
     private void clearMediaPlayer(){
         mMediaPlayer.release();
         mMediaPlayer = null;
@@ -87,6 +99,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
     @Override
     public void onPrepared(MediaPlayer mp) {
         mp.start();
+        activity.setProgressOnSeekbar();
     }
 
     @Override
@@ -101,23 +114,23 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        Log.v("MEDIAPLAYER", "onCOMPLITION");
-        if (player.getRepeat() == Player.REPEAT_ONE){
-            Log.v("MEDIAPLAYER", "ONE");
+        Random r = new Random();
+        if(player.isShuffle()){
+            int rand = r.nextInt(player.getPlayingList().size());
+            player.setCurrentPlaying(rand);
+            player.playCurrent();
+        }else if (player.getRepeat() == Player.REPEAT_ONE){
             player.playCurrent();
         }else if (player.getRepeat() == Player.REPEAT_ALL && player.getCurrentPlaying() < (player.getPlayingList().size() - 1)){
-            Log.v("MEDIAPLAYER", "ALL");
             player.next();
         }else if (player.getRepeat() == Player.REPEAT_ALL && player.getCurrentPlaying() == (player.getPlayingList().size() - 1)){
-            Log.v("MEDIAPLAYER", "ALL");
             player.setCurrentPlaying(0);
-            player.play();
+            player.playCurrent();
         }else if (player.getRepeat() == Player.REPEAT_OFF && player.getCurrentPlaying() < (player.getPlayingList().size() - 1)){
-            Log.v("MEDIAPLAYER", "OFF");
             player.next();
         }else if (player.getRepeat() == Player.REPEAT_OFF && player.getCurrentPlaying() == (player.getPlayingList().size() - 1)){
-            Log.v("MEDIAPLAYER", "OFF");
             player.stop();
+            activity.stopProgressBarUpdate();
         }
     }
 }

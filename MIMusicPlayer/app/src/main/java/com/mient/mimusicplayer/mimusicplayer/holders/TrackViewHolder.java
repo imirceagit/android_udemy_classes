@@ -31,7 +31,7 @@ public class TrackViewHolder extends RecyclerView.ViewHolder {
     public void updateUI(Song song){
         listSongArtist.setText(song.getArtist());
         listSongTitle.setText(song.getTitle());
-        listSongTime.setText(String.format("%d: %d",
+        listSongTime.setText(String.format("%02d:%02d",
                 TimeUnit.MILLISECONDS.toMinutes(song.getTime()),
                 TimeUnit.MILLISECONDS.toSeconds(song.getTime()) -
                         TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.

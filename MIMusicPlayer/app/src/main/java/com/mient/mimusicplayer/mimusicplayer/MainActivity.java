@@ -2,6 +2,8 @@ package com.mient.mimusicplayer.mimusicplayer;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -43,6 +45,7 @@ import com.mient.mimusicplayer.mimusicplayer.fragments.PlaylistsFragment;
 import com.mient.mimusicplayer.mimusicplayer.fragments.TracksFragment;
 import com.mient.mimusicplayer.mimusicplayer.model.Player;
 import com.mient.mimusicplayer.mimusicplayer.model.Song;
+import com.mient.mimusicplayer.mimusicplayer.services.MusicIntentReceiver;
 import com.mient.mimusicplayer.mimusicplayer.services.TracksService;
 
 import java.util.ArrayList;
@@ -65,7 +68,6 @@ public class MainActivity extends AppCompatActivity
 
     //MainActivity Widgets - player Action Bar
     private BitmapFactory.Options options;
-
     private LinearLayout playerLayout;
     private LayoutState playerLayoutState;
     private ConstraintLayout playerActionBar;
@@ -89,7 +91,7 @@ public class MainActivity extends AppCompatActivity
     private TracksService tracksService;
 
     //Player Instance
-    private Player musicPlayer;
+    private static Player musicPlayer;
 
     private TracksFragment tracksFragment;
 
@@ -108,6 +110,9 @@ public class MainActivity extends AppCompatActivity
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
 
+    //Intents
+    private MusicIntentReceiver musicIntentReceiver;
+
     //Utils
     int displayHeight;
     int displayWidth;
@@ -120,16 +125,19 @@ public class MainActivity extends AppCompatActivity
         getDisplaySize();
         sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         musicPlayer = Player.getInstance();
-
+        options = new BitmapFactory.Options();
         tracksFragment = TracksFragment.newInstance();
+
+        IntentFilter filter = new IntentFilter(Intent.ACTION_HEADSET_PLUG);
+        registerReceiver(musicIntentReceiver, filter);
+
+        musicIntentReceiver = new MusicIntentReceiver();
 
         if(sharedPref.contains(getString(R.string.mi_music_player_shuffle)) && sharedPref.contains(getString(R.string.mi_music_player_repeat)) && sharedPref.contains(getString(R.string.mi_music_player_last_track))){
             getPreferences();
         }else {
             initPreferences();
         }
-
-        musicPlayer.init(allTracksList, 0, 0, Player.PLAYER_STOP, playerShuffle, playerRepeat);
 
         playerLayout = (LinearLayout) findViewById(R.id.player_layout);
         playerActionBar = (ConstraintLayout) findViewById(R.id.player_action_bar);
@@ -291,6 +299,19 @@ public class MainActivity extends AppCompatActivity
             tracksService.init(this);
         }
 
+        int playerSongOnReopen = 0;
+
+        if(playerAudioId > 0){
+            for (int i = 0; i < allTracksList.size(); i++) {
+                if(allTracksList.get(i).getAudioId() == playerAudioId){
+                    playerSongOnReopen = i;
+                    break;
+                }
+            }
+        }
+
+        musicPlayer.init(allTracksList, playerSongOnReopen, 0, Player.PLAYER_STOP, playerShuffle, playerRepeat);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -351,17 +372,18 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void updatePlayerUI(){
-//        options = new BitmapFactory.Options();
-//        options.inSampleSize = 8;
-//        if(musicPlayer.getCurrentPlayingForUI().getCoverArtPath() == null){
-//            playerAlbumArt.setImageResource(R.drawable.ic_music_video_black_48dp);
-//            playerActionBarAlbumArt.setImageResource(R.drawable.ic_music_video_black_48dp);
-//        }
-//        else {
-//            final Bitmap b = BitmapFactory.decodeFile(musicPlayer.getCurrentPlayingForUI().getCoverArtPath(), options);
-//            playerAlbumArt.setImageBitmap(b);
-//            playerActionBarAlbumArt.setImageBitmap(b);
-//        }
+        if(musicPlayer.getCurrentPlayingForUI().getCoverArtPath() == null){
+            playerAlbumArt.setImageResource(R.drawable.ic_music_video_black_48dp);
+            playerActionBarAlbumArt.setImageResource(R.drawable.ic_music_video_black_48dp);
+        }
+        else {
+            options.inSampleSize = 2;
+            final Bitmap b = BitmapFactory.decodeFile(musicPlayer.getCurrentPlayingForUI().getCoverArtPath(), options);
+            playerAlbumArt.setImageBitmap(b);
+            options.inSampleSize = 8;
+            final Bitmap bb = BitmapFactory.decodeFile(musicPlayer.getCurrentPlayingForUI().getCoverArtPath(), options);
+            playerActionBarAlbumArt.setImageBitmap(bb);
+        }
         playerActionBarArtist.setText(musicPlayer.getCurrentPlayingForUI().getArtist());
         playerActionBarTitle.setText(musicPlayer.getCurrentPlayingForUI().getTitle());
         playerFullTime.setText(String.format("%02d:%02d",
@@ -425,6 +447,12 @@ public class MainActivity extends AppCompatActivity
         playerShuffle = sharedPref.getBoolean(getString(R.string.mi_music_player_shuffle), false);
         playerRepeat = sharedPref.getInt(getString(R.string.mi_music_player_repeat), Player.REPEAT_OFF);
         playerAudioId = sharedPref.getLong(getString(R.string.mi_music_player_last_track), 0);
+
+        Log.v("PREFERENCES", "GET shuffle " + String.valueOf(playerShuffle) + " - repeat " + String.valueOf(playerRepeat) + " - audioId " + String.valueOf(playerAudioId));
+    }
+
+    public static void audioBecomingNoisy(){
+        musicPlayer.audioBecomingNoisy();
     }
 
     public static void displayToast(String message){
@@ -477,6 +505,10 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+        }else if(playerLayoutState == LayoutState.EXPANDED){
+            playerLayout.animate().translationY(displayHeight - convertDpToPixel(74, mainActivity));
+            playerLayoutState = LayoutState.COLLAPSED;
+            playerActionBarPlay.setVisibility(View.VISIBLE);
         }else {
             super.onBackPressed();
         }
@@ -563,5 +595,39 @@ public class MainActivity extends AppCompatActivity
             }
             return null;
         }
+    }
+
+    @Override
+    protected void onPause() {
+        savePreferences();
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        getPreferences();
+        super.onResume();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    protected void onDestroy() {
+        durationHandler.removeCallbacks(updateSeekBarTime);
+        musicPlayer.onDestroy();
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
     }
 }

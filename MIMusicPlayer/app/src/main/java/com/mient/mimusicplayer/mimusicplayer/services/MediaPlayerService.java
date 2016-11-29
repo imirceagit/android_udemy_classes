@@ -1,5 +1,7 @@
 package com.mient.mimusicplayer.mimusicplayer.services;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
@@ -11,6 +13,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.mient.mimusicplayer.mimusicplayer.MainActivity;
+import com.mient.mimusicplayer.mimusicplayer.R;
 import com.mient.mimusicplayer.mimusicplayer.model.Player;
 import com.mient.mimusicplayer.mimusicplayer.model.Song;
 
@@ -21,10 +24,14 @@ import java.util.Random;
  * Created by mircea.ionita on 11/25/2016.
  */
 
-public class MediaPlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener {
+public class MediaPlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
+
+    private static final int NOTIFICATION_ID = 1234;
 
     private static final String ACTION_PLAY = "com.mient.mimusicplayer.action.PLAY";
     MediaPlayer mMediaPlayer = null;
+
+    AudioManager audioManager;
 
     private MainActivity activity = MainActivity.mainActivity;
 
@@ -32,6 +39,35 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
 
     private Song currentSong;
     private Song song;
+
+    private Notification notification;
+
+    public MediaPlayerService(Player player) {
+        this.player = player;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    public void onCreate(){
+
+        Intent notificationIntent = new Intent(activity, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(activity, 0, notificationIntent, 0);
+
+        notification = new Notification.Builder(activity)
+                .setContentTitle("MI Music Player")
+                .setContentText("Music")
+                .setSmallIcon(R.drawable.ic_music_video_black_48dp)
+                .build();
+
+//        startForeground(NOTIFICATION_ID, notification);
+
+        audioManager = (AudioManager) activity.getSystemService(activity.AUDIO_SERVICE);
+        audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC,
+                AudioManager.AUDIOFOCUS_GAIN);
+    }
 
     public void initMediaPlayer() {
         mMediaPlayer = new MediaPlayer();
@@ -63,11 +99,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
     }
 
     public void pause() {
-        if (mMediaPlayer.isPlaying()) mMediaPlayer.pause();
+        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) mMediaPlayer.pause();
     }
 
     public void stop(){
-        if (mMediaPlayer.isPlaying()) mMediaPlayer.stop();
+        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) mMediaPlayer.stop();
         clearMediaPlayer();
     }
 
@@ -84,10 +120,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
     private void clearMediaPlayer(){
         mMediaPlayer.release();
         mMediaPlayer = null;
-    }
-
-    public void setPlayerHelper(Player p){
-        this.player = p;
+//        stopForeground(true);
     }
 
     @Nullable
@@ -110,6 +143,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
     @Override
     public void onDestroy() {
         if (mMediaPlayer != null) mMediaPlayer.release();
+        mMediaPlayer = null;
     }
 
     @Override
@@ -131,6 +165,35 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
         }else if (player.getRepeat() == Player.REPEAT_OFF && player.getCurrentPlaying() == (player.getPlayingList().size() - 1)){
             player.stop();
             activity.stopProgressBarUpdate();
+        }
+    }
+
+    @Override
+    public void onAudioFocusChange(int focusChange) {
+        switch (focusChange) {
+            case AudioManager.AUDIOFOCUS_GAIN:
+                Log.v("FOCUS", "AUDIOFOCUS_GAIN");
+                if (mMediaPlayer == null) initMediaPlayer();
+                else if (!mMediaPlayer.isPlaying()) mMediaPlayer.start();
+                mMediaPlayer.setVolume(1.0f, 1.0f);
+                break;
+
+            case AudioManager.AUDIOFOCUS_LOSS:
+                Log.v("FOCUS", "AUDIOFOCUS_LOSS");
+                if (mMediaPlayer.isPlaying()) mMediaPlayer.stop();
+                mMediaPlayer.release();
+                mMediaPlayer = null;
+                break;
+
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                Log.v("FOCUS", "AUDIOFOCUS_LOSS_TRANSIENT");
+                if (mMediaPlayer.isPlaying()) mMediaPlayer.pause();
+                break;
+
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                Log.v("FOCUS", "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
+                if (mMediaPlayer.isPlaying()) mMediaPlayer.setVolume(0.1f, 0.1f);
+                break;
         }
     }
 }

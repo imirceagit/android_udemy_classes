@@ -1,5 +1,6 @@
 package com.mient.mimusicplayer.mimusicplayer.model;
 
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.util.Log;
 
@@ -45,8 +46,8 @@ public class Player{
     }
 
     public void init(ArrayList<Song> playingList, int currentPlaying, int progress, int playerState, boolean shuffle, int repeat) {
-        mediaPlayerService = new MediaPlayerService();
-        mediaPlayerService.setPlayerHelper(instance);
+        mediaPlayerService = new MediaPlayerService(this);
+        mediaPlayerService.onCreate();
         this.playingList = playingList;
         this.currentPlaying = currentPlaying;
         this.progress = progress;
@@ -87,7 +88,9 @@ public class Player{
 
 
     public void pause(){
+        setPlayerState(PLAYER_PAUSE);
         mediaPlayerService.pause();
+        activity.updatePlayerUI();
     }
 
     public void stop(){
@@ -162,14 +165,17 @@ public class Player{
 
     }
 
+    public void audioBecomingNoisy(){
+        pause();
+    }
+
     public long getMusicTime(){
         return playingList.get(currentPlaying).getTime();
     }
 
 
     public long getLastTrackAudioId(){
-        long audioId = 0;
-        return audioId;
+        return getCurrentPlayingForUI().getAudioId();
     }
 
     public static void setInstance(Player instance) {
@@ -223,6 +229,10 @@ public class Player{
 
     public void setRepeat(int repeat) {
         this.repeat = repeat;
+    }
+
+    public void onDestroy(){
+        mediaPlayerService.onDestroy();
     }
 }
 

@@ -7,13 +7,15 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
 import android.util.Log;
 
 import com.mient.mimusicplayer.mimusicplayer.model.Constants;
 import com.mient.mimusicplayer.mimusicplayer.activities.MainActivity;
 import com.mient.mimusicplayer.mimusicplayer.R;
 import com.mient.mimusicplayer.mimusicplayer.model.Player;
+import com.mient.mimusicplayer.mimusicplayer.model.Track;
+
+import java.util.ArrayList;
 
 /**
  * Created by mircea.ionita on 12/5/2016.
@@ -23,26 +25,33 @@ public class ForegroundService extends Service {
 
     private static final String LOG_TAG = "MEDIA_PLAYER_SERVICE";
 
-    private Player mPlayer;
+    private MediaPlayerService mediaPlayerService;
+    private int currentTrack;
+
+    private ArrayList<Track> tracksList = new ArrayList<>();
 
     @Override
     public void onCreate() {
-        mPlayer = Player.getInstance();
+        tracksList = MainActivity.allTracksList;
+        mediaPlayerService = new MediaPlayerService(tracksList, currentTrack);
         super.onCreate();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent.getAction().equals(Constants.ACTION.STARTFOREGROUND_ACTION)){
-            Log.v(LOG_TAG, "START INTENT");
-
-            Notification notification = createNotification(true);
-            startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, notification);
-
-        } else if (intent.getAction().equals(Constants.ACTION.PREV_ACTION)){
+        if (intent.getAction().equals(Constants.ACTION.PREV_ACTION)){
             Log.v(LOG_TAG, "PREV INTENT");
+            mediaPlayerService.prev();
+
         } else if (intent.getAction().equals(Constants.ACTION.PLAY_ACTION)){
             Log.v(LOG_TAG, "PLAY INTENT");
+
+            Bundle extras = intent.getExtras();
+            if (extras != null){
+                currentTrack = extras.getInt(Constants.KEYS.PLAY_TRACK);
+            }
+
+            mediaPlayerService.play(tracksList.get(currentTrack));
 
             Notification notification = createNotification(true);
             startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, notification);
@@ -50,15 +59,25 @@ public class ForegroundService extends Service {
         } else if (intent.getAction().equals(Constants.ACTION.PAUSE_ACTION)){
             Log.v(LOG_TAG, "PAUSE INTENT");
 
+            mediaPlayerService.pause();
             Notification notification = createNotification(false);
             startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, notification);
 
         }else if (intent.getAction().equals(Constants.ACTION.NEXT_ACTION)){
             Log.v(LOG_TAG, "NEXT INTENT");
+
+            mediaPlayerService.next();
+        } else if (intent.getAction().equals(Constants.ACTION.STOP_ACTION)){
+            Log.v(LOG_TAG, "STOP INTENT");
+            mediaPlayerService.stop();
+
         } else if (intent.getAction().equals(Constants.ACTION.SEEK_ACTION)){
+            Log.v(LOG_TAG, "SEEK INTENT");
+            int progress;
             Bundle extras = intent.getExtras();
             if (extras != null){
-                extras.getInt(Constants.KEYS.SEEK_KEY);
+                progress = extras.getInt(Constants.KEYS.SEEK_KEY);
+                mediaPlayerService.seek(progress);
             }
         } else if (intent.getAction().equals(Constants.ACTION.STOPFOREGROUND_ACTION)){
             Log.v(LOG_TAG, "STOP INTENT");

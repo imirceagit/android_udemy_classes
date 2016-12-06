@@ -2,11 +2,13 @@ package com.mient.mimusicplayer.mimusicplayer.model;
 
 import android.net.Uri;
 
+import java.io.Serializable;
+
 /**
  * Created by mircea.ionita on 12/5/2016.
  */
 
-public class Track{
+public class Track implements Serializable{
 
     private long trackId;
     private long audioId;

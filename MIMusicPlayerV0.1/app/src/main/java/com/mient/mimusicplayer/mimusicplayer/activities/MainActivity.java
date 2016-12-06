@@ -3,12 +3,16 @@ package com.mient.mimusicplayer.mimusicplayer.activities;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.TabLayout;
@@ -30,7 +34,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -42,11 +45,14 @@ import com.mient.mimusicplayer.mimusicplayer.fragment.PlaylistsFragment;
 import com.mient.mimusicplayer.mimusicplayer.fragment.TracksFragment;
 import com.mient.mimusicplayer.mimusicplayer.model.Constants;
 import com.mient.mimusicplayer.mimusicplayer.R;
+import com.mient.mimusicplayer.mimusicplayer.model.Player;
 import com.mient.mimusicplayer.mimusicplayer.model.Track;
 import com.mient.mimusicplayer.mimusicplayer.services.ForegroundService;
 import com.mient.mimusicplayer.mimusicplayer.services.MediaContentService;
 
 import java.util.ArrayList;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -93,16 +99,32 @@ public class MainActivity extends AppCompatActivity
     //Media Content
     private MediaContentService mediaContentService;
 
+    //SharedPreferences
+    SharedPreferences sharedPref;
+    private int preferenceShuffle;
+    private int preferenceRepeat;
+    private long preferenceLastTrackId;
+
+    //Player
+    public static Player mPlayer;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mainActivity = this;
-
+        sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        mPlayer = new Player();
         tracksFragment = TracksFragment.newInstance();
         playlistsFragment = PlaylistsFragment.newInstance();
-
+        options = new BitmapFactory.Options();
         getDisplaySize();
+
+        if(sharedPref.contains(Constants.KEYS.SHUFFLE) && sharedPref.contains(Constants.KEYS.REPEAT) && sharedPref.contains(Constants.KEYS.LAST_TRACK)){
+            getPreferences();
+        }else {
+            initPreferences();
+        }
 
         playerLayout = (LinearLayout) findViewById(R.id.player_layout);
         playerActionBar = (ConstraintLayout) findViewById(R.id.player_action_bar);
@@ -127,22 +149,88 @@ public class MainActivity extends AppCompatActivity
         playerLayoutState = Constants.LAYOUT_STATE.COLLAPSED;
 
         mediaContentService = MediaContentService.getInstance();
-
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, Constants.PERMISSIONS_ID.READ_EXTERNAL_STORAGE);
         }else {
-            Log.v(LOG_TAG, "QUERY");
             mediaContentService.queryAllTracks();
         }
 
-//        start.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Intent startIntent = new Intent(MainActivity.this, ForegroundService.class);
-//                startIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
-//                startService(startIntent);
-//            }
-//        });
+        playerActionBar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(playerLayoutState == Constants.LAYOUT_STATE.COLLAPSED){
+                    playerLayout.animate().translationY(0);
+                    playerLayoutState = Constants.LAYOUT_STATE.EXPANDED;
+                    playerActionBarPlay.setVisibility(View.INVISIBLE);
+                }else if(playerLayoutState == Constants.LAYOUT_STATE.EXPANDED){
+                    playerLayout.animate().translationY(displayHeight - convertDpToPixel(74, mainActivity));
+                    playerLayoutState = Constants.LAYOUT_STATE.COLLAPSED;
+                    playerActionBarPlay.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        playerLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
+        playerActionBarPlay.setOnClickListener(playButtonListener);
+        playerPlayButton.setOnClickListener(playButtonListener);
+
+        playerPrevButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mPlayer.prev();
+            }
+        });
+
+        playerNextButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mPlayer.next();
+            }
+        });
+
+        playerShuffleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mPlayer.shuffle();
+            }
+        });
+
+        playerRepeatButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mPlayer.repeat();
+            }
+        });
+
+        playerProgressBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if(fromUser){
+                    mPlayer.seek((int) (mPlayer.getTrackDuration() * progress/100));
+                    playerPassedTime.setText(String.format("%02d:%02d",
+                            TimeUnit.MILLISECONDS.toMinutes((mPlayer.getTrackDuration() * progress/100)),
+                            TimeUnit.MILLISECONDS.toSeconds((mPlayer.getTrackDuration() * progress/100)) -
+                                    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.
+                                            toMinutes((mPlayer.getTrackDuration() * progress/100)))));
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -162,6 +250,113 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+    }
+
+    View.OnClickListener playButtonListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            switch (mPlayer.getPlayerState()){
+                case Constants.PLAYER_STATE.PLAY:
+                    mPlayer.pause();
+                    break;
+                case Constants.PLAYER_STATE.STOP:
+                case Constants.PLAYER_STATE.PAUSE:
+                    mPlayer.play();
+                    break;
+            }
+            updatePlayerUI();
+        }
+    };
+
+    public void setCurrentTrackPlaying(ArrayList<Track> list, int position){
+        mPlayer.restartPlayer(list, position);
+        updatePlayerUI();
+    }
+
+    public void mediaContentComplete(){
+        mPlayer.initPlayer(allTracksList, 0, preferenceShuffle, preferenceRepeat);
+    }
+
+    private void initPreferences(){
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putInt(Constants.KEYS.SHUFFLE, Constants.SHUFFLE_MODE.OFF);
+        editor.putInt(Constants.KEYS.REPEAT, Constants.REPEATE_MODE.OFF);
+        editor.putLong(Constants.KEYS.LAST_TRACK, 0);
+        editor.commit();
+    }
+
+    private void savePreferences(){
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putInt(Constants.KEYS.SHUFFLE, mPlayer.getShuffleMode());
+        editor.putInt(Constants.KEYS.REPEAT, mPlayer.getRepeatMode());
+        editor.putLong(Constants.KEYS.LAST_TRACK, mPlayer.getCurrentPlayingTrack().getTrackId());
+        editor.commit();
+    }
+
+    private void getPreferences(){
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        preferenceShuffle = sharedPref.getInt(Constants.KEYS.SHUFFLE, Constants.SHUFFLE_MODE.OFF);
+        preferenceRepeat = sharedPref.getInt(Constants.KEYS.REPEAT, Constants.REPEATE_MODE.OFF);
+        preferenceLastTrackId = sharedPref.getLong(Constants.KEYS.LAST_TRACK, 0);
+
+        if (allTracksList != null && allTracksList.size() > 0 && preferenceLastTrackId > 0){
+            mediaContentComplete();
+        }
+    }
+
+    public void updatePlayerUI(){
+        if(mPlayer.getCurrentPlayingTrack().getCoverArtPath() == null){
+            playerAlbumArt.setImageResource(R.drawable.ic_music_video_black_48dp);
+            playerActionBarAlbumArt.setImageResource(R.drawable.ic_music_video_black_48dp);
+        }
+        else {
+            options.inSampleSize = 2;
+            final Bitmap b = BitmapFactory.decodeFile(mPlayer.getCurrentPlayingTrack().getCoverArtPath(), options);
+            playerAlbumArt.setImageBitmap(b);
+            options.inSampleSize = 8;
+            final Bitmap bb = BitmapFactory.decodeFile(mPlayer.getCurrentPlayingTrack().getCoverArtPath(), options);
+            playerActionBarAlbumArt.setImageBitmap(bb);
+        }
+        playerActionBarArtist.setText(mPlayer.getCurrentPlayingTrack().getArtist());
+        playerActionBarTitle.setText(mPlayer.getCurrentPlayingTrack().getTitle());
+        playerFullTime.setText(String.format("%02d:%02d",
+                TimeUnit.MILLISECONDS.toMinutes(mPlayer.getCurrentPlayingTrack().getDuration()),
+                TimeUnit.MILLISECONDS.toSeconds(mPlayer.getCurrentPlayingTrack().getDuration()) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.
+                                toMinutes(mPlayer.getCurrentPlayingTrack().getDuration()))));
+
+        if(mPlayer.getShuffleMode() == Constants.SHUFFLE_MODE.ON){
+            playerShuffleButton.setImageResource(R.drawable.ic_shuffle_orange_48dp);
+        }else {
+            playerShuffleButton.setImageResource(R.drawable.ic_shuffle_white_48dp);
+        }
+
+        switch (mPlayer.getRepeatMode()){
+            case Constants.REPEATE_MODE.ALL: playerRepeatButton.setImageResource(R.drawable.ic_repeat_orange_48dp);
+                break;
+            case Constants.REPEATE_MODE.ONE: playerRepeatButton.setImageResource(R.drawable.ic_repeat_one_orange_48dp);
+                break;
+            case Constants.REPEATE_MODE.OFF:
+            default:
+                playerRepeatButton.setImageResource(R.drawable.ic_repeat_white_48dp);
+        }
+
+        switch (mPlayer.getPlayerState()){
+            case Constants.PLAYER_STATE.PLAY:
+                playerPlayButton.setImageResource(R.drawable.ic_pause_white_48dp);
+                playerActionBarPlay.setImageResource(R.drawable.ic_pause_white_48dp);
+                break;
+            case Constants.PLAYER_STATE.PAUSE:
+            case Constants.PLAYER_STATE.STOP:
+            default:
+                playerPlayButton.setImageResource(R.drawable.ic_play_arrow_white_48dp);
+                playerActionBarPlay.setImageResource(R.drawable.ic_play_arrow_white_48dp);
+        }
+
+        if(mPlayer.getPlayerState() == Constants.PLAYER_STATE.STOP){
+            playerProgressBar.setProgress(0);
+        }
     }
 
     @Override
@@ -300,5 +495,43 @@ public class MainActivity extends AppCompatActivity
             }
             return null;
         }
+    }
+
+    @Override
+    protected void onPause() {
+        savePreferences();
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        getPreferences();
+        super.onResume();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mPlayer.getPlayerState() != Constants.PLAYER_STATE.PLAY){
+            Intent playIntent = new Intent(this, ForegroundService.class);
+            playIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
+            this.startService(playIntent);
+        }
+        mPlayer.onDestroy();
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
     }
 }

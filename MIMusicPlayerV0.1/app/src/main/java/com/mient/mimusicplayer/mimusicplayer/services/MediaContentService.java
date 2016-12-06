@@ -20,6 +20,8 @@ public class MediaContentService {
 
     private static MediaContentService instance;
 
+    private MainActivity activity = MainActivity.mainActivity;
+
     public static MediaContentService getInstance(){
         if (instance == null){
             instance = new MediaContentService();
@@ -31,7 +33,7 @@ public class MediaContentService {
 
     }
 
-    private AsyncQueryHandler queryHandler = new AsyncQueryHandler(MainActivity.mainActivity.getContentResolver()) {
+    private AsyncQueryHandler queryHandler = new AsyncQueryHandler(activity.getContentResolver()) {
         @Override
         protected void onQueryComplete(int token, Object cookie, Cursor cursor) {
             Log.v(LOG_TAG, "onQueryComplete");
@@ -55,6 +57,7 @@ public class MediaContentService {
                             ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, cursor.getLong(idColumn)), getCoverArtPath(albumId)));
                 } while (cursor.moveToNext());
             }
+            activity.mediaContentComplete();
         }
     };
 

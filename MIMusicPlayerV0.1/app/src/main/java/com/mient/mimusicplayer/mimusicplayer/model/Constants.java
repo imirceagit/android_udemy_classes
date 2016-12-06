@@ -12,6 +12,7 @@ public class Constants {
         String PLAY_ACTION = "com.mient.mimusicplayer.action.play";
         String PAUSE_ACTION = "com.mient.mimusicplayer.action.pause";
         String NEXT_ACTION = "com.mient.mimusicplayer.action.next";
+        String STOP_ACTION = "com.mient.mimusicplayer.action.stop";
         String SEEK_ACTION = "com.mient.mimusicplayer.action.seek";
         String STARTFOREGROUND_ACTION = "com.mient.mimusicplayer.action.startforeground";
         String STOPFOREGROUND_ACTION = "com.mient.mimusicplayer.action.stopforeground";
@@ -49,5 +50,10 @@ public class Constants {
 
     public interface KEYS {
         String SEEK_KEY = "com.mient.mimusicplayer.key.seek";
+        String PLAY_TRACK = "com.mient.mimusicplayer.key.playtrack";
+
+        String SHUFFLE = "com.mient.mimusicplayer.key.shuffle";
+        String REPEAT = "com.mient.mimusicplayer.key.repeat";
+        String LAST_TRACK = "com.mient.mimusicplayer.key.lasttrack";
     }
 }

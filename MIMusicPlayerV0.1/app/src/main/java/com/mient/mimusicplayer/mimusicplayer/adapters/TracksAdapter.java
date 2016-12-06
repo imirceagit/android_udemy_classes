@@ -41,7 +41,7 @@ public class TracksAdapter extends RecyclerView.Adapter<TrackViewHolder> {
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                activity.setCurrentTrack(songList, currentPosition);
+                activity.setCurrentTrackPlaying(trackList, currentPosition);
             }
         });
     }

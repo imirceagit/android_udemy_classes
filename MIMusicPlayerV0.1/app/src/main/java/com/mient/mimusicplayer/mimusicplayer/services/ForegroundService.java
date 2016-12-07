@@ -33,7 +33,8 @@ public class ForegroundService extends Service {
     @Override
     public void onCreate() {
         tracksList = MainActivity.allTracksList;
-        mediaPlayerService = new MediaPlayerService(tracksList, currentTrack);
+        mediaPlayerService = MediaPlayerService.getInstance();
+        mediaPlayerService.init(tracksList, currentTrack);
         super.onCreate();
     }
 

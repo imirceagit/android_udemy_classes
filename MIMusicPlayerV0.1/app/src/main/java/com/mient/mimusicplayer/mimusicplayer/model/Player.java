@@ -30,7 +30,7 @@ public class Player {
     private MainActivity activity = MainActivity.mainActivity;
 
     public void initPlayer(ArrayList<Track> list, int position, int shuffle, int repeat){
-        mediaPlayerService = new MediaPlayerService(playingList, currentPlayingPosition);
+        mediaPlayerService = MediaPlayerService.getInstance();
         playingList = list;
         currentPlayingPosition = position;
         setCurrentPlayingTrack();
@@ -144,6 +144,7 @@ public class Player {
 
     public void setCurrentPlayingPosition(int currentPlayingPosition) {
         this.currentPlayingPosition = currentPlayingPosition;
+        currentPlayingTrack = playingList.get(this.currentPlayingPosition);
     }
 
     public void setCurrentPlayingTrack(Track currentPlayingTrack) {

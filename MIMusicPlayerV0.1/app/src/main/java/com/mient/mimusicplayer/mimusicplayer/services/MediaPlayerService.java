@@ -31,10 +31,24 @@ public class MediaPlayerService implements MediaPlayer.OnPreparedListener, Media
 
     private Track currentTrack;
 
-    public MediaPlayerService(ArrayList<Track> tracksList, int currentTrackPosition) {
+    private static MediaPlayerService instance;
+
+    public static MediaPlayerService getInstance(){
+        if(instance == null){
+            instance = new MediaPlayerService();
+        }
+        return instance;
+    }
+
+    public MediaPlayerService() {
+
+    }
+
+    public void init(ArrayList<Track> tracksList, int currentTrackPosition){
         this.tracksList = tracksList;
         this.currentTrackPosition = currentTrackPosition;
     }
+
 
     private void prepareMediaPlayer(){
         mMediaPlayer = new MediaPlayer();
@@ -85,6 +99,8 @@ public class MediaPlayerService implements MediaPlayer.OnPreparedListener, Media
             player.setCurrentPlayingPosition(tracksList.size() - 1);
         }
         play(tracksList.get(player.getCurrentPlayingPosition()));
+        activity.updatePlayerUI();
+
     }
 
     public void next(){
@@ -99,6 +115,7 @@ public class MediaPlayerService implements MediaPlayer.OnPreparedListener, Media
             player.setCurrentPlayingPosition(0);
         }
         play(tracksList.get(player.getCurrentPlayingPosition()));
+        activity.updatePlayerUI();
     }
 
     public void seek(int progress){
@@ -117,7 +134,24 @@ public class MediaPlayerService implements MediaPlayer.OnPreparedListener, Media
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-
+        Random r = new Random();
+        if(player.getShuffleMode() == Constants.SHUFFLE_MODE.ON){
+            int rand = r.nextInt(tracksList.size());
+            player.setCurrentPlayingPosition(rand);
+            play(tracksList.get(player.getCurrentPlayingPosition()));
+        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.ONE){
+            play(tracksList.get(player.getCurrentPlayingPosition()));
+        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.ALL && player.getCurrentPlayingPosition() < (tracksList.size() - 1)){
+            player.next();
+        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.ALL && player.getCurrentPlayingPosition() == (tracksList.size() - 1)){
+            player.setCurrentPlayingPosition(0);
+            play(tracksList.get(player.getCurrentPlayingPosition()));
+        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.OFF && player.getCurrentPlayingPosition() < (tracksList.size() - 1)){
+            player.next();
+        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.OFF && player.getCurrentPlayingPosition() == (tracksList.size() - 1)){
+            player.stop();
+        }
+        activity.updatePlayerUI();
     }
 
     @Override

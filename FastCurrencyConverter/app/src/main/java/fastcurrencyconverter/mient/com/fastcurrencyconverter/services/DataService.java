@@ -86,6 +86,29 @@ public class DataService {
         return favoriteCurrencies;
     }
 
+    public ArrayList<Currency> getLastCurencies(){
+        todayCurrencies.clear();
+        Cursor cursor = dbHelper.getLastCurencies();
+
+        String baseTrag = "EUR";
+        String date = activity.getLastUpdate();
+
+        todayCurrencies.add(new Currency("Euro", "EUR", 1, baseTrag, date, false, 0));
+
+        int i = 0;
+
+        while (cursor.moveToNext()){
+
+            String name = names[i];
+            String tag = tags[i];
+            double value = cursor.getDouble(i);
+            todayCurrencies.add(new Currency(name, tag, value, baseTrag, date, false, 0));
+
+            i++;
+        }
+        return todayCurrencies;
+    }
+
     public long insertFavCurrency(String tag){
         return dbHelper.insertFavCurrency(tag);
     }
@@ -95,14 +118,6 @@ public class DataService {
     }
 
     public  ArrayList<Currency> downloadCurrentValues(String uri){
-
-        if (getLastUpdate().equals(activity.getLastUpdate())){
-            Log.v("UPDATE", getLastUpdate() + " - " + activity.getLastUpdate());
-            Log.v("UPDATE", "LAST UPDATE");
-        }else {
-            Log.v("UPDATE", getLastUpdate() + " - " + activity.getLastUpdate());
-            Log.v("UPDATE", "NO UPDATE");
-        }
 
         final String url = BASE_URL + uri;
 
@@ -120,6 +135,16 @@ public class DataService {
                 });
 
         Volley.newRequestQueue(activity.getBaseContext()).add(jsonObjectRequest);
+
+        if (getLastUpdate().equals(activity.getLastUpdate())){
+            Log.v("UPDATE", getLastUpdate() + " - " + activity.getLastUpdate());
+            Log.v("UPDATE", "LAST UPDATE");
+        }else {
+            Log.v("UPDATE", getLastUpdate() + " - " + activity.getLastUpdate());
+            Log.v("UPDATE", "NO UPDATE");
+            dbHelper.insertTodayCurrency(activity.getLastUpdate(), todayCurrencies);
+
+        }
 
         return todayCurrencies;
     }
@@ -154,7 +179,7 @@ public class DataService {
         editor.commit();
     }
 
-    private String getLastUpdate(){
+    public String getLastUpdate(){
         SharedPreferences sharedPref = activity.getPreferences(Context.MODE_PRIVATE);
         String date = sharedPref.getString(SHARED_PREF_LAST_UPDATE, "");
         return date;

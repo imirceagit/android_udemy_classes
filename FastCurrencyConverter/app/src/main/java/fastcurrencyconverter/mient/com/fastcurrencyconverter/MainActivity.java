@@ -42,7 +42,13 @@ public class MainActivity extends AppCompatActivity {
 
         dataService = DataService.getInstance();
         dataService.init(this);
-        todayCurrencies = dataService.downloadCurrentValues("latest");
+
+        if (dataService.getLastUpdate().equals(lastUpdate)){
+            todayCurrencies = dataService.getLastCurencies();
+        }else {
+            todayCurrencies = dataService.downloadCurrentValues("latest");
+        }
+
         favoriteCurrencies = dataService.getFavoriteCurrencies();
 
         fragmentManager = getSupportFragmentManager();

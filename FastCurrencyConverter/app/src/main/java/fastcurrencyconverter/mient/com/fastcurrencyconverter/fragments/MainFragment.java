@@ -46,6 +46,8 @@ public class MainFragment extends Fragment {
 
     private double amount;
 
+    private boolean inFocus;
+
     public MainFragment() {
 
     }
@@ -91,6 +93,23 @@ public class MainFragment extends Fragment {
             public void onFocusChange(View v, boolean hasFocus) {
                 if (!hasFocus) {
                     hideKeyboard(v);
+                    inFocus = false;
+                    if (amountText.getText().length() == 0){
+                        amountText.setText("0");
+                        try {
+                            amount = Double.parseDouble(amountText.getText().toString());
+                        }catch (NumberFormatException e){
+                            Log.v("NUMERIC", e.getLocalizedMessage());
+                            amount = 0;
+                            amountText.setText("0");
+                        }
+                        calculate(currencyTagText.getText().toString());
+                    }
+                    Log.v("FOCUS", String.valueOf(inFocus));
+                }else {
+                    inFocus = true;
+                    Log.v("FOCUS", String.valueOf(inFocus));
+                    amountText.setText("");
                 }
             }
         });
@@ -117,9 +136,16 @@ public class MainFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if(s.length() == 0){
-                    amount = 0;
-                    amountText.setText("0");
+                    if(!inFocus){
+                        amount = 0;
+                        amountText.setText("0");
+                        Log.v("TextChange", "Changed");
+                    }
                 }else {
+                    if (s.length() > 1 && s.toString().startsWith("0")){
+                        amountText.setText("");
+                        amountText.append(s.toString().substring(1));
+                    }
                     try {
                         amount = Double.parseDouble(s.toString());
                     }catch (NumberFormatException e){

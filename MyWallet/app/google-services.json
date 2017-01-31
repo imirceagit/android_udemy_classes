@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "1089297387636",
+    "firebase_url": "https://mywallet-2ba94.firebaseio.com",
+    "project_id": "mywallet-2ba94",
+    "storage_bucket": "mywallet-2ba94.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1089297387636:android:cb29cf5c5288496d",
+        "android_client_info": {
+          "package_name": "mywallet.mient.com.mywallet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1089297387636-oosjuojltk4fk0gjob2ddpimg4hk2t83.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhTSK3lgzkgA2U8vHg-w6KfIssZ9BWXLA"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

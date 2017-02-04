@@ -8,9 +8,15 @@
   "client": [
     {
       "client_info": {
+<<<<<<< HEAD
         "mobilesdk_app_id": "1:1089297387636:android:cb29cf5c5288496d",
         "android_client_info": {
           "package_name": "mywallet.mient.com.mywallet"
+=======
+        "mobilesdk_app_id": "1:1089297387636:android:a612f4036c99ea95",
+        "android_client_info": {
+          "package_name": "com.mient.mywallet.mywallet"
+>>>>>>> 13a2b3f50e06e0e48f8cba397dcdb50726f9448b
         }
       },
       "oauth_client": [

@@ -17,6 +17,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    packagingOptions {
+        exclude 'META-INF/LICENSE.txt'
+    }
 }
 
 dependencies {
@@ -31,4 +34,5 @@ dependencies {
     compile 'com.facebook.android:facebook-android-sdk:4.9.0'
     testCompile 'junit:junit:4.12'
 }
+
 apply plugin: 'com.google.gms.google-services'

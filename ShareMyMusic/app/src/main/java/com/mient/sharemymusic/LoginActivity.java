@@ -17,6 +17,7 @@ import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
+import com.facebook.Profile;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.firebase.client.Firebase;
@@ -40,10 +41,17 @@ public class LoginActivity extends AppCompatActivity {
     Firebase mRef=new Firebase("https://sharemymusic-8667b.firebaseio.com/");
 
     private CallbackManager callbackManager;
+    private User user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        user = User.getInstance();
+
+        FacebookSdk.sdkInitialize(getApplicationContext());
+        callbackManager = CallbackManager.Factory.create();
+
 
         auth = FirebaseAuth.getInstance();
 
@@ -60,16 +68,13 @@ public class LoginActivity extends AppCompatActivity {
         btnSignup = (Button) findViewById(R.id.btn_signup);
         btnLogin = (Button) findViewById(R.id.btn_login);
         btnReset = (Button) findViewById(R.id.btn_reset_password);
-        LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
-
-        FacebookSdk.sdkInitialize(getApplicationContext());
-        callbackManager = CallbackManager.Factory.create();
+        loginButton = (LoginButton) findViewById(R.id.login_button);
 
         loginButton.setReadPermissions("email", "public_profile");
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
-                signInWithFacebook(loginResult.getAccessToken());
+                onLoginSucces(loginResult);
             }
 
             @Override
@@ -137,91 +142,34 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
-    private void signInWithFacebook(AccessToken token) {
-        Log.d(TAG, "signInWithFacebook:" + token);
+    private void onLoginSucces(LoginResult loginResult){
+        Profile profile = Profile.getCurrentProfile();
+        user.setProfile(message(profile));
 
-        AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
-        auth.signInWithCredential(credential)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        Log.d(TAG, "signInWithCredential:onComplete:" + task.isSuccessful());
+        user.setUid(loginResult.getAccessToken().getUserId());
+        user.setAccessToken(loginResult.getAccessToken().getToken());
 
-                        if (!task.isSuccessful()) {
-                            Log.w(TAG, "signInWithCredential", task.getException());
-                            Toast.makeText(LoginActivity.this, "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
-                        }else{
-                            String uid=task.getResult().getUser().getUid();
-                            String name=task.getResult().getUser().getDisplayName();
-                            String email=task.getResult().getUser().getEmail();
-                            String image=task.getResult().getUser().getPhotoUrl().toString();
-
-                            //Create a new User and Save it in Firebase database
-                            User user = new User(uid,name,null,email,null);
-
-                            mRef.child(uid).setValue(user);
-
-                            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                            intent.putExtra("user_id",uid);
-                            intent.putExtra("profile_picture",image);
-                            startActivity(intent);
-                            finish();
-                        }
-                    }
-                });
-    }
-}
-
-
-class User {
-    public String uid,name,a1,email,a2;
-
-    public User(String uid, String name, String a1, String email, String a2) {
-        this.uid = uid;
-        this.name = name;
-        this.a1 = a1;
-        this.email = email;
-        this.a2 = a2;
+        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+        startActivity(intent);
+        finish();
     }
 
-    public String getUid() {
-        return uid;
+    private String message(Profile profile) {
+        StringBuilder stringBuffer = new StringBuilder();
+        if (profile != null) {
+            stringBuffer.append("Welcome ").append(profile.getName());
+        }
+        return stringBuffer.toString();
     }
 
-    public void setUid(String uid) {
-        this.uid = uid;
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Profile profile = Profile.getCurrentProfile();
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getA1() {
-        return a1;
-    }
-
-    public void setA1(String a1) {
-        this.a1 = a1;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getA2() {
-        return a2;
-    }
-
-    public void setA2(String a2) {
-        this.a2 = a2;
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        callbackManager.onActivityResult(requestCode, resultCode, data);
     }
 }

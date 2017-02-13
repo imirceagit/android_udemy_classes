@@ -23,10 +23,14 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth.AuthStateListener authStateListener;
     private FirebaseUser user;
 
+    private User fbUser;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        fbUser = User.getInstance();
 
         btnSignout = (Button) findViewById(R.id.btn_signout);
         btnSave = (Button) findViewById(R.id.btn_save);
@@ -39,6 +43,10 @@ public class MainActivity extends AppCompatActivity {
 
         if (user != null) {
             Log.v("MAINACTIVITY", "OUT " + user.getEmail());
+        }
+
+        if (fbUser.getUid() != null){
+            displayName.setText(fbUser.getName());
         }
 
         authStateListener = new FirebaseAuth.AuthStateListener() {

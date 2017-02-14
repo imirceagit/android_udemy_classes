@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "447839473856",
+    "firebase_url": "https://signin-c827d.firebaseio.com",
+    "project_id": "signin-c827d",
+    "storage_bucket": "signin-c827d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:447839473856:android:55e229f6b6df68b9",
+        "android_client_info": {
+          "package_name": "com.mient.signin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "447839473856-hnoajuq1lvbcp6k27ofic0rtk399ro82.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPwsA5xgGgDwNAAJvrihSSWDpPukd0yNM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

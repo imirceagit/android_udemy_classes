@@ -12,11 +12,13 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.facebook.AccessToken;
+import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
+import com.facebook.ProfileTracker;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -40,7 +42,9 @@ public class MainActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
-    AccessToken currentToken;
+    private AccessToken currentToken;
+    private AccessTokenTracker accessTokenTracker;
+    private ProfileTracker mProfileTracker;
 
 
     @Override
@@ -60,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         profileImgView = (ImageView) findViewById(R.id.profile_img);
         loginButton = (LoginButton) findViewById(R.id.login_button);
 
-        loginButton.setReadPermissions("email", "public_profile");
+//        loginButton.setReadPermissions("email", "public_profile");
 
         logedEntity.getToken();
 
@@ -69,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
         if(AccessToken.getCurrentAccessToken() != null && logedEntity.getAccessToken() != null && logedEntity.getAccessToken().equals(AccessToken.getCurrentAccessToken().getToken())){
             Log.v(TAG, "TOKEN EXIST");
             clearUserArea();
+
             Profile profile = Profile.getCurrentProfile();
             info.setText(message(profile));
             String profileImgUrl = "https://graph.facebook.com/" + profile.getId() + "/picture?type=large";
@@ -79,18 +84,36 @@ public class MainActivity extends AppCompatActivity {
                     .into(profileImgView);
         }
 
+        accessTokenTracker = new AccessTokenTracker() {
+            @Override
+            protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken,
+                                                       AccessToken currentAccessToken) {
+
+                Log.v(TAG, "OLD " + (oldAccessToken == null ? "" : oldAccessToken.getToken()) + " CURRENT " + (currentAccessToken == null ? "" :currentAccessToken.getToken()));
+
+                if (currentAccessToken == null) {
+                    FirebaseAuth.getInstance().signOut();
+                    clearUserArea();
+                }
+            }
+        };
+
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 Log.v(TAG, "===========================ON SUCCESS=======================");
 
-                currentToken = AccessToken.getCurrentAccessToken();
-                if (currentToken != null){
-                    FirebaseAuth.getInstance().signOut();
-                    clearUserArea();
-                }
+                mProfileTracker = new ProfileTracker() {
+                    @Override
+                    protected void onCurrentProfileChanged(Profile profile, Profile profile2) {
+                        Log.v("facebook - profile", profile2.getFirstName());
+                        info.setText(message(profile2));
+                        mProfileTracker.stopTracking();
+                    }
+                };
+
                 Profile profile = Profile.getCurrentProfile();
-                info.setText(message(profile));
+                info.setText("TEST " + message(profile));
 
                 String userId = loginResult.getAccessToken().getUserId();
                 String accessToken = loginResult.getAccessToken().getToken();
@@ -168,6 +191,12 @@ public class MainActivity extends AppCompatActivity {
         if (mAuthListener != null) {
             mAuth.removeAuthStateListener(mAuthListener);
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        accessTokenTracker.stopTracking();
     }
 
     @Override

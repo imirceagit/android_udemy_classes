@@ -20,7 +20,8 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:layout_alignParentTop="true"
-            android:textSize="18sp" />
+            android:textSize="18sp"
+            android:text="Profile"/>
 
         <ImageView
             android:id="@+id/profile_img"

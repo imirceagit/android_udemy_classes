@@ -1,5 +1,6 @@
 package com.mient.mimusicplayer.mimusicplayer.model;
 
+import android.app.Service;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.util.Log;
@@ -60,7 +61,7 @@ public class Player{
         return playingList.get(currentPlaying);
     }
 
-    public void play(){
+    public void play(Song s){
         switch (getPlayerState()){
             case Player.PLAYER_PLAY:
                 setPlayerState(Player.PLAYER_PAUSE);
@@ -72,7 +73,8 @@ public class Player{
                 break;
             case Player.PLAYER_STOP:
                 setPlayerState(Player.PLAYER_PLAY);
-                mediaPlayerService.play(playingList.get(currentPlaying));
+//                mediaPlayerService.play(playingList.get(currentPlaying));
+                mediaPlayerService.play(s);
                 break;
             default:
                 setPlayerState(Player.PLAYER_STOP);

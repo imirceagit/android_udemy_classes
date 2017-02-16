@@ -2,11 +2,9 @@ package com.mient.mimusicplayer.mimusicplayer.services;
 
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
@@ -24,7 +22,9 @@ import java.util.Random;
  * Created by mircea.ionita on 11/25/2016.
  */
 
-public class MediaPlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
+public class MediaPlayerService implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
+
+    private static final String LOG_TAG = "MEDIA_PLAYER_SERVICE";
 
     private static final int NOTIFICATION_ID = 1234;
 
@@ -44,11 +44,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
 
     public MediaPlayerService(Player player) {
         this.player = player;
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        return super.onStartCommand(intent, flags, startId);
     }
 
     public void onCreate(){
@@ -123,11 +118,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
 //        stopForeground(true);
     }
 
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
 
     @Override
     public void onPrepared(MediaPlayer mp) {
@@ -140,7 +130,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnPrepare
         return false;
     }
 
-    @Override
     public void onDestroy() {
         if (mMediaPlayer != null) mMediaPlayer.release();
         mMediaPlayer = null;

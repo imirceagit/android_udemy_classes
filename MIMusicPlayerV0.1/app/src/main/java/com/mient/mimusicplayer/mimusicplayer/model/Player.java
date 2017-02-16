@@ -7,6 +7,7 @@ import com.mient.mimusicplayer.mimusicplayer.services.ForegroundService;
 import com.mient.mimusicplayer.mimusicplayer.services.MediaPlayerService;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -15,7 +16,7 @@ import java.util.Random;
 
 public class Player {
 
-    private ArrayList<Track> playingList;
+    private Playlist currentPlaylist;
     private int currentPlayingPosition;
     private Track currentPlayingTrack;
     private int progress;
@@ -23,15 +24,13 @@ public class Player {
     private int shuffleMode;
     private int repeatMode;
 
-    private Track lastPlayedTrack;
-
     private MediaPlayerService mediaPlayerService;
 
     private MainActivity activity = MainActivity.mainActivity;
 
-    public void initPlayer(ArrayList<Track> list, int position, int shuffle, int repeat){
+    public void initPlayer(List<Track> list, int position, int shuffle, int repeat){
         mediaPlayerService = MediaPlayerService.getInstance();
-        playingList = list;
+        currentPlaylist.setTrackList(list);
         currentPlayingPosition = position;
         setCurrentPlayingTrack();
         progress = 0;
@@ -40,8 +39,8 @@ public class Player {
         repeatMode = repeat;
     }
 
-    public void restartPlayer(ArrayList<Track> list, int position){
-        playingList = list;
+    public void restartPlayer(List<Track> list, int position){
+        currentPlaylist.setTrackList(list);
         currentPlayingPosition = position;
         setCurrentPlayingTrack();
         progress = 0;
@@ -76,12 +75,12 @@ public class Player {
     public void prev(){
         Random r = new Random();
         if(shuffleMode == Constants.SHUFFLE_MODE.ON){
-            int rand = r.nextInt(playingList.size());
+            int rand = r.nextInt(currentPlaylist.getTrackCount());
             currentPlayingPosition = rand;
         }else if(currentPlayingPosition > 0 ){
             currentPlayingPosition--;
         }else if (currentPlayingPosition == 0){
-            currentPlayingPosition = playingList.size() - 1;
+            currentPlayingPosition = currentPlaylist.getTrackCount() - 1;
         }
         setCurrentPlayingTrack();
         play();
@@ -90,11 +89,11 @@ public class Player {
     public void next(){
         Random r = new Random();
         if(shuffleMode == Constants.SHUFFLE_MODE.ON){
-            int rand = r.nextInt(playingList.size());
+            int rand = r.nextInt(currentPlaylist.getTrackCount());
             currentPlayingPosition = rand;
-        }else if(currentPlayingPosition < playingList.size() - 1){
+        }else if(currentPlayingPosition < currentPlaylist.getTrackCount() - 1){
             currentPlayingPosition++;
-        }else if (currentPlayingPosition == playingList.size() - 1){
+        }else if (currentPlayingPosition == currentPlaylist.getTrackCount() - 1){
             currentPlayingPosition = 0;
         }
         setCurrentPlayingTrack();
@@ -139,12 +138,12 @@ public class Player {
     }
 
     public void setPlayingList(ArrayList<Track> playingList) {
-        this.playingList = playingList;
+        currentPlaylist.setTrackList(playingList);
     }
 
     public void setCurrentPlayingPosition(int currentPlayingPosition) {
         this.currentPlayingPosition = currentPlayingPosition;
-        currentPlayingTrack = playingList.get(this.currentPlayingPosition);
+        currentPlayingTrack = currentPlaylist.getTrackList().get(this.currentPlayingPosition);
     }
 
     public void setCurrentPlayingTrack(Track currentPlayingTrack) {
@@ -176,7 +175,7 @@ public class Player {
     }
 
     public void setCurrentPlayingTrack() {
-        currentPlayingTrack = playingList.get(currentPlayingPosition);
+        currentPlayingTrack = currentPlaylist.getTrackList().get(currentPlayingPosition);
     }
 
     public Track getCurrentPlayingTrack() {

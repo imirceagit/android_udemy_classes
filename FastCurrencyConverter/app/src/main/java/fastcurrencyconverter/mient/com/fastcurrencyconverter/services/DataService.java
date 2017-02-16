@@ -136,15 +136,15 @@ public class DataService {
 
         Volley.newRequestQueue(activity.getBaseContext()).add(jsonObjectRequest);
 
-        if (getLastUpdate().equals(activity.getLastUpdate())){
-            Log.v("UPDATE", getLastUpdate() + " - " + activity.getLastUpdate());
-            Log.v("UPDATE", "LAST UPDATE");
-        }else {
-            Log.v("UPDATE", getLastUpdate() + " - " + activity.getLastUpdate());
-            Log.v("UPDATE", "NO UPDATE");
-            dbHelper.insertTodayCurrency(activity.getLastUpdate(), todayCurrencies);
-
-        }
+//        if (getLastUpdate().equals(activity.getLastUpdate())){
+//            Log.v("UPDATE", getLastUpdate() + " - " + activity.getLastUpdate());
+//            Log.v("UPDATE", "LAST UPDATE");
+//        }else {
+//            Log.v("UPDATE", getLastUpdate() + " - " + activity.getLastUpdate());
+//            Log.v("UPDATE", "NO UPDATE");
+//            dbHelper.insertTodayCurrency(activity.getLastUpdate(), todayCurrencies);
+//
+//        }
 
         return todayCurrencies;
     }

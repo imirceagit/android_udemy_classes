@@ -46,6 +46,7 @@ import com.mient.mimusicplayer.mimusicplayer.fragment.TracksFragment;
 import com.mient.mimusicplayer.mimusicplayer.model.Constants;
 import com.mient.mimusicplayer.mimusicplayer.R;
 import com.mient.mimusicplayer.mimusicplayer.model.Player;
+import com.mient.mimusicplayer.mimusicplayer.model.Playlist;
 import com.mient.mimusicplayer.mimusicplayer.model.Track;
 import com.mient.mimusicplayer.mimusicplayer.services.ForegroundService;
 import com.mient.mimusicplayer.mimusicplayer.services.MediaContentService;
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity
 
     public static MainActivity mainActivity;
 
-    public static ArrayList<Track> allTracksList = new ArrayList<>();
+    public static Playlist defaultPlaylist;
 
     //MainActivity Widgets - player Action Bar
     private BitmapFactory.Options options;
@@ -113,6 +114,9 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mainActivity = this;
+
+        defaultPlaylist = new Playlist("default");
+
         sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         mPlayer = new Player();
         tracksFragment = TracksFragment.newInstance();
@@ -274,7 +278,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void mediaContentComplete(){
-        mPlayer.initPlayer(allTracksList, 0, preferenceShuffle, preferenceRepeat);
+        mPlayer.initPlayer(defaultPlaylist.getTrackList(), 0, preferenceShuffle, preferenceRepeat);
     }
 
     private void initPreferences(){

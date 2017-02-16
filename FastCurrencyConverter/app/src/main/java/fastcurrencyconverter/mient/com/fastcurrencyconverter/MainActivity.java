@@ -65,12 +65,12 @@ public class MainActivity extends AppCompatActivity {
     };
 
     public void selectCurrency(Currency item){
-//        for (int i = 0; i < favoriteCurrencies.size(); i++){
-//            if(favoriteCurrencies.get(i).getTag().equals(item.getTag())){
-//                favoriteCurrencies.remove(i);
-//            }
-//        }
-        mainFragment.selectCurrency(item);
+        for (int i = 0; i < favoriteCurrencies.size(); i++){
+            if(favoriteCurrencies.get(i).getTag().equals(item.getTag())){
+                favoriteCurrencies.remove(i);
+            }
+        }
+//        mainFragment.selectCurrency(item);
     }
 
     public void createFavoriteList(){

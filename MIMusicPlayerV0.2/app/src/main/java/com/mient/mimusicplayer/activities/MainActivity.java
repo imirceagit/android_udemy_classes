@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -46,6 +47,7 @@ import com.mient.mimusicplayer.fragments.TracksFragment;
 import com.mient.mimusicplayer.model.Constants;
 import com.mient.mimusicplayer.model.Playlist;
 import com.mient.mimusicplayer.services.MediaContentService;
+import com.mient.mimusicplayer.services.MediaPlayerService;
 import com.mient.mimusicplayer.services.Player;
 
 import java.util.ArrayList;
@@ -105,11 +107,16 @@ public class MainActivity extends AppCompatActivity {
     private int preferenceRepeat;
     private long preferenceLastTrackId;
 
+    private MediaPlayerService mediaPlayerService;
+    private Handler durationHandler = new Handler();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mainActivity = this;
         setContentView(R.layout.activity_main);
+
+        mediaPlayerService = MediaPlayerService.getInstance();
 
         //INIT VARIABLES
         defaultPlaylist = new Playlist("default");
@@ -163,6 +170,12 @@ public class MainActivity extends AppCompatActivity {
 
         playerLayout.setTranslationY(displayHeight - convertDpToPixel(74, mainActivity));
         playerLayout.bringToFront();
+        playerLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
         playerLayoutState = Constants.LAYOUT_STATE.COLLAPSED;
 
 
@@ -186,9 +199,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (player.getPlayerState() == Constants.PLAYER_STATE.PLAY){
+                    durationHandler.postDelayed(updateSeekBarTime, 100);
                     player.pause();
                 } else {
-                    player.play(-1);
+                    durationHandler.removeCallbacks(updateSeekBarTime);
+                    player.play();
                 }
             }
         };
@@ -255,14 +270,43 @@ public class MainActivity extends AppCompatActivity {
         if (defaultPlaylist.getTrackCount() >= 0){
             defaultPlaylist.setCurrentPosition(0);
         }
-        player.setCurrentTrack(defaultPlaylist.getCurrentTrack());
+        durationHandler.postDelayed(updateSeekBarTime, 100);
+        player.initPlayer(defaultPlaylist, true);
         updatePlayerUI();
     }
 
     public void setCurrentTrackPlaying(int position){
         defaultPlaylist.setCurrentPosition(position);
-        player.setCurrentTrack(defaultPlaylist.getCurrentTrack());
+        durationHandler.postDelayed(updateSeekBarTime, 100);
+        player.initPlayer(defaultPlaylist, false);
         updatePlayerUI();
+    }
+
+    private Runnable updateSeekBarTime = new Runnable() {
+        public void run() {
+            playerPassedTime.setText(String.format("%02d:%02d",
+                    TimeUnit.MILLISECONDS.toMinutes(mediaPlayerService.getCurrentProgress()),
+                    TimeUnit.MILLISECONDS.toSeconds(mediaPlayerService.getCurrentProgress()) -
+                            TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.
+                                    toMinutes(mediaPlayerService.getCurrentProgress()))));
+
+            playerProgressBar.setProgress((mediaPlayerService.getCurrentProgress() * 100) / (int) player.getCurrentTrack().getDuration());
+
+            if (mediaPlayerService.getCurrentProgress() < 2){
+                player.setCurrentTrack(mediaPlayerService.getCurrentPlaying());
+                updatePlayerUI();
+            }
+
+            durationHandler.postDelayed(this, 100);
+        }
+    };
+
+    public void stopProgressBarUpdate(){
+        durationHandler.removeCallbacks(updateSeekBarTime);
+    }
+
+    public void setProgressOnSeekbar(){
+        durationHandler.postDelayed(updateSeekBarTime, 100);
     }
 
     public void updatePlayerUI(){
@@ -375,6 +419,9 @@ public class MainActivity extends AppCompatActivity {
         preferenceRepeat = sharedPref.getInt(Constants.KEYS.REPEAT, Constants.REPEATE_MODE.OFF);
         preferenceLastTrackId = sharedPref.getLong(Constants.KEYS.LAST_TRACK, 0);
 
+        player.setShuffleMode(preferenceShuffle);
+        player.setRepeatMode(preferenceRepeat);
+
         if (defaultPlaylist.getTrackList() != null && defaultPlaylist.getTrackCount() > 0 && preferenceLastTrackId > 0){
             mediaContentComplete();
         }
@@ -449,7 +496,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        savePreferences();
         super.onPause();
     }
 
@@ -457,5 +503,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         getPreferences();
         super.onResume();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        savePreferences();
+        durationHandler.removeCallbacks(updateSeekBarTime);
+        player.onDestroy();
     }
 }

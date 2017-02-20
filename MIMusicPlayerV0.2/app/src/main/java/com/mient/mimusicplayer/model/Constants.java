@@ -10,10 +10,12 @@ public class Constants {
         String MAIN_ACTION = "com.mient.mimusicplayer.action.main";
         String PREV_ACTION = "com.mient.mimusicplayer.action.prev";
         String PLAY_ACTION = "com.mient.mimusicplayer.action.play";
+        String RESUME_ACTION = "com.mient.mimusicplayer.action.resume";
         String PAUSE_ACTION = "com.mient.mimusicplayer.action.pause";
         String NEXT_ACTION = "com.mient.mimusicplayer.action.next";
         String STOP_ACTION = "com.mient.mimusicplayer.action.stop";
         String SEEK_ACTION = "com.mient.mimusicplayer.action.seek";
+        String UPGRADE_ACTION = "com.mient.mimusicplayer.action.upgrade";
         String STARTFOREGROUND_ACTION = "com.mient.mimusicplayer.action.startforeground";
         String STOPFOREGROUND_ACTION = "com.mient.mimusicplayer.action.stopforeground";
     }
@@ -50,9 +52,10 @@ public class Constants {
 
     public interface KEYS {
         String SEEK_KEY = "com.mient.mimusicplayer.key.seek";
-        String PLAY_TRACK = "com.mient.mimusicplayer.key.playtrack";
+        String PLAYLIST = "com.mient.mimusicplayer.key.playlist";
         String SHUFFLE = "com.mient.mimusicplayer.key.shuffle";
         String REPEAT = "com.mient.mimusicplayer.key.repeat";
+        String ONSTART = "com.mient.mimusicplayer.key.repeat";
         String LAST_TRACK = "com.mient.mimusicplayer.key.lasttrack";
     }
 }

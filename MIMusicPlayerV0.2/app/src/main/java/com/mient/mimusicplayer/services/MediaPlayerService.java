@@ -3,11 +3,9 @@ package com.mient.mimusicplayer.services;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.PowerManager;
+import android.util.Log;
 
 import com.mient.mimusicplayer.activities.MainActivity;
-import com.mient.mimusicplayer.mimusicplayer.activities.MainActivity;
-import com.mient.mimusicplayer.mimusicplayer.model.Constants;
-import com.mient.mimusicplayer.mimusicplayer.model.Track;
 import com.mient.mimusicplayer.model.Constants;
 import com.mient.mimusicplayer.model.Playlist;
 import com.mient.mimusicplayer.model.Track;
@@ -22,13 +20,16 @@ import java.util.Random;
 
 public class MediaPlayerService implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener, MediaPlayer.OnErrorListener {
 
+    private static final String LOG_TAG = "MEDIA_PLAYER_SERVICE";
+
     private MainActivity activity = MainActivity.mainActivity;
+    private ForegroundService foregroundService;
 
     private MediaPlayer mMediaPlayer = null;
     private AudioManager audioManager;
 
-    private Playlist playlist = new Playlist();
-    private Track currentTrack;
+    private Track currentPlaying;
+    private int pos;
 
     private static MediaPlayerService instance;
 
@@ -39,20 +40,18 @@ public class MediaPlayerService implements MediaPlayer.OnPreparedListener, Media
         return instance;
     }
 
-    public MediaPlayerService() {
-
+    public MediaPlayerService(){
     }
 
-    public void init(Playlist list){
-        playlist = list;
-        currentTrack = playlist.getCurrentTrack();
+    public void init(ForegroundService fs) {
+        foregroundService = fs;
     }
 
-    private void prepareMediaPlayer(){
+    private void prepareMediaPlayer(Track track){
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         try {
-            mMediaPlayer.setDataSource(activity.getApplicationContext(), currentTrack.getUri());
+            mMediaPlayer.setDataSource(activity.getApplicationContext(), track.getUri());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -63,15 +62,20 @@ public class MediaPlayerService implements MediaPlayer.OnPreparedListener, Media
         mMediaPlayer.setOnErrorListener(this);
     }
 
-    public void play(Track track){
+    public void play(Track track, int position){
+        pos = position;
         if (mMediaPlayer == null){
-            currentTrack = track;
-            prepareMediaPlayer();
-        }else if (mMediaPlayer != null && !currentTrack.equals(track)){
+            prepareMediaPlayer(track);
+        }else if (mMediaPlayer != null){
             stop();
-            currentTrack = track;
-            prepareMediaPlayer();
+            prepareMediaPlayer(track);
         }else if(!mMediaPlayer.isPlaying()){
+            mMediaPlayer.start();
+        }
+    }
+
+    public void resume(){
+        if(!mMediaPlayer.isPlaying()){
             mMediaPlayer.start();
         }
     }
@@ -85,36 +89,36 @@ public class MediaPlayerService implements MediaPlayer.OnPreparedListener, Media
         clearMediaPlayer();
     }
 
-    public void prev(){
-        Random r = new Random();
-        if(player.getShuffleMode() == Constants.SHUFFLE_MODE.ON){
-            int rand = r.nextInt(tracksList.size());
-            player.setCurrentPlayingPosition(rand);
-        }else if(player.getCurrentPlayingPosition() > 0 ){
-            int pos = player.getCurrentPlayingPosition();
-            player.setCurrentPlayingPosition(--pos);
-        }else if (player.getCurrentPlayingPosition() == 0){
-            player.setCurrentPlayingPosition(tracksList.size() - 1);
-        }
-        play(tracksList.get(player.getCurrentPlayingPosition()));
-        activity.updatePlayerUI();
+//    public void prev(){
+//        Random r = new Random();
+//        if(player.getShuffleMode() == Constants.SHUFFLE_MODE.ON){
+//            int rand = r.nextInt(tracksList.size());
+//            player.setCurrentPlayingPosition(rand);
+//        }else if(player.getCurrentPlayingPosition() > 0 ){
+//            int pos = player.getCurrentPlayingPosition();
+//            player.setCurrentPlayingPosition(--pos);
+//        }else if (player.getCurrentPlayingPosition() == 0){
+//            player.setCurrentPlayingPosition(tracksList.size() - 1);
+//        }
+//        play(tracksList.get(player.getCurrentPlayingPosition()));
+//        activity.updatePlayerUI();
+//
+//    }
 
-    }
-
-    public void next(){
-        Random r = new Random();
-        if(player.getShuffleMode() == Constants.SHUFFLE_MODE.ON){
-            int rand = r.nextInt(tracksList.size());
-            player.setCurrentPlayingPosition(rand);
-        }else if(player.getCurrentPlayingPosition() < tracksList.size() - 1){
-            int pos = player.getCurrentPlayingPosition();
-            player.setCurrentPlayingPosition(++pos);
-        }else if (player.getCurrentPlayingPosition() == tracksList.size() - 1){
-            player.setCurrentPlayingPosition(0);
-        }
-        play(tracksList.get(player.getCurrentPlayingPosition()));
-        activity.updatePlayerUI();
-    }
+//    public void next(){
+//        Random r = new Random();
+//        if(player.getShuffleMode() == Constants.SHUFFLE_MODE.ON){
+//            int rand = r.nextInt(tracksList.size());
+//            player.setCurrentPlayingPosition(rand);
+//        }else if(player.getCurrentPlayingPosition() < tracksList.size() - 1){
+//            int pos = player.getCurrentPlayingPosition();
+//            player.setCurrentPlayingPosition(++pos);
+//        }else if (player.getCurrentPlayingPosition() == tracksList.size() - 1){
+//            player.setCurrentPlayingPosition(0);
+//        }
+//        play(tracksList.get(player.getCurrentPlayingPosition()));
+//        activity.updatePlayerUI();
+//    }
 
     public void seek(int progress){
         mMediaPlayer.seekTo(progress);
@@ -132,24 +136,37 @@ public class MediaPlayerService implements MediaPlayer.OnPreparedListener, Media
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        Random r = new Random();
-        if(player.getShuffleMode() == Constants.SHUFFLE_MODE.ON){
-            int rand = r.nextInt(tracksList.size());
-            player.setCurrentPlayingPosition(rand);
-            play(tracksList.get(player.getCurrentPlayingPosition()));
-        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.ONE){
-            play(tracksList.get(player.getCurrentPlayingPosition()));
-        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.ALL && player.getCurrentPlayingPosition() < (tracksList.size() - 1)){
-            player.next();
-        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.ALL && player.getCurrentPlayingPosition() == (tracksList.size() - 1)){
-            player.setCurrentPlayingPosition(0);
-            play(tracksList.get(player.getCurrentPlayingPosition()));
-        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.OFF && player.getCurrentPlayingPosition() < (tracksList.size() - 1)){
-            player.next();
-        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.OFF && player.getCurrentPlayingPosition() == (tracksList.size() - 1)){
-            player.stop();
+//        Random r = new Random();
+//        if(player.getShuffleMode() == Constants.SHUFFLE_MODE.ON){
+//            int rand = r.nextInt(tracksList.size());
+//            player.setCurrentPlayingPosition(rand);
+//            play(tracksList.get(player.getCurrentPlayingPosition()));
+//        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.ONE){
+//            play(tracksList.get(player.getCurrentPlayingPosition()));
+//        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.ALL && player.getCurrentPlayingPosition() < (tracksList.size() - 1)){
+//            player.next();
+//        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.ALL && player.getCurrentPlayingPosition() == (tracksList.size() - 1)){
+//            player.setCurrentPlayingPosition(0);
+//            play(tracksList.get(player.getCurrentPlayingPosition()));
+//        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.OFF && player.getCurrentPlayingPosition() < (tracksList.size() - 1)){
+//            player.next();
+//        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.OFF && player.getCurrentPlayingPosition() == (tracksList.size() - 1)){
+//            player.stop();
+//        }
+//        activity.updatePlayerUI();
+        foregroundService.onCompletition();
+    }
+
+    public int getCurrentProgress() {
+        if (mMediaPlayer != null && mMediaPlayer.isPlaying()){
+            return mMediaPlayer.getCurrentPosition();
+        }else {
+            return 0;
         }
-        activity.updatePlayerUI();
+    }
+
+    public int getCurrentPlaying(){
+        return pos;
     }
 
     @Override

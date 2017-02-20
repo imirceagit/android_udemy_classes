@@ -1,13 +1,15 @@
 package com.mient.mimusicplayer.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by mircea.ionita on 2/16/2017.
  */
 
-public class Playlist {
+public class Playlist implements Serializable {
 
     private String name;
     private List<Track> trackList;
@@ -38,22 +40,47 @@ public class Playlist {
         return trackList.get(currentPosition);
     }
 
-    public Track getNextTrack(){
-        if (currentPosition == (trackCount - 1)){
-            currentPosition = 0;
-        }else {
-            currentPosition++;
+    public Track getNextTrack(boolean shuffle){
+        if (shuffle){
+            Random r = new Random();
+            int rand = r.nextInt(trackCount);
+            currentPosition = rand;
+        } else{
+            if (currentPosition == (trackCount - 1)){
+                currentPosition = 0;
+            }else {
+                currentPosition = currentPosition + 1;
+            }
+        }
+
+        return trackList.get(currentPosition);
+    }
+
+    public Track getPrevTrack(boolean shuffle){
+        if (shuffle){
+            Random r = new Random();
+            int rand = r.nextInt(trackCount);
+            currentPosition = rand;
+        } else {
+            if (currentPosition == 0){
+                currentPosition = (trackCount - 1);
+            }else {
+                currentPosition = currentPosition - 1;
+            }
         }
         return trackList.get(currentPosition);
     }
 
-    public Track getPrevTrack(){
-        if (currentPosition == 0){
-            currentPosition = (trackCount - 1);
+    public boolean isLastTrack(){
+        if (currentPosition == trackCount - 1){
+            return true;
         }else {
-            currentPosition--;
+            return false;
         }
-        return trackList.get(currentPosition);
+    }
+
+    public void resetPlaylist(){
+        setCurrentPosition(0);
     }
 
     public String getName() {

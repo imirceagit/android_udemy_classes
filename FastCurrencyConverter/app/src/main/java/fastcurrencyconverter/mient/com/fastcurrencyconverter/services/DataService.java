@@ -86,28 +86,28 @@ public class DataService {
         return favoriteCurrencies;
     }
 
-    public ArrayList<Currency> getLastCurencies(){
-        todayCurrencies.clear();
-        Cursor cursor = dbHelper.getLastCurencies();
-
-        String baseTrag = "EUR";
-        String date = activity.getLastUpdate();
-
-        todayCurrencies.add(new Currency("Euro", "EUR", 1, baseTrag, date, false, 0));
-
-        int i = 0;
-
-        while (cursor.moveToNext()){
-
-            String name = names[i];
-            String tag = tags[i];
-            double value = cursor.getDouble(i);
-            todayCurrencies.add(new Currency(name, tag, value, baseTrag, date, false, 0));
-
-            i++;
-        }
-        return todayCurrencies;
-    }
+//    public ArrayList<Currency> getLastCurencies(){
+//        todayCurrencies.clear();
+//        Cursor cursor = dbHelper.getLastCurencies();
+//
+//        String baseTrag = "EUR";
+//        String date = activity.getLastUpdate();
+//
+//        todayCurrencies.add(new Currency("Euro", "EUR", 1, baseTrag, date, false, 0));
+//
+//        int i = 0;
+//
+//        while (cursor.moveToNext()){
+//
+//            String name = names[i];
+//            String tag = tags[i];
+//            double value = cursor.getDouble(i);
+//            todayCurrencies.add(new Currency(name, tag, value, baseTrag, date, false, 0));
+//
+//            i++;
+//        }
+//        return todayCurrencies;
+//    }
 
     public long insertFavCurrency(String tag){
         return dbHelper.insertFavCurrency(tag);

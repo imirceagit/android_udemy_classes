@@ -3,35 +3,27 @@ package com.mient.mimusicplayer.services;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.PowerManager;
-import android.util.Log;
 
 import com.mient.mimusicplayer.activities.MainActivity;
-import com.mient.mimusicplayer.model.Constants;
-import com.mient.mimusicplayer.model.Playlist;
 import com.mient.mimusicplayer.model.Track;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Random;
 
 /**
  * Created by mircea.ionita on 12/6/2016.
  */
 
-public class MediaPlayerService implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener, MediaPlayer.OnErrorListener {
+public class MediaPlayerService implements MediaPlayer.OnPreparedListener, AudioManager.OnAudioFocusChangeListener, MediaPlayer.OnErrorListener {
 
     private static final String LOG_TAG = "MEDIA_PLAYER_SERVICE";
 
+    private static MediaPlayerService instance;
+
+    private PlayerService playerService = PlayerService.getInstance();
     private MainActivity activity = MainActivity.mainActivity;
-    private ForegroundService foregroundService;
 
     private MediaPlayer mMediaPlayer = null;
     private AudioManager audioManager;
-
-    private Track currentPlaying;
-    private int pos;
-
-    private static MediaPlayerService instance;
 
     public static MediaPlayerService getInstance(){
         if(instance == null){
@@ -41,10 +33,6 @@ public class MediaPlayerService implements MediaPlayer.OnPreparedListener, Media
     }
 
     public MediaPlayerService(){
-    }
-
-    public void init(ForegroundService fs) {
-        foregroundService = fs;
     }
 
     private void prepareMediaPlayer(Track track){
@@ -57,13 +45,12 @@ public class MediaPlayerService implements MediaPlayer.OnPreparedListener, Media
         }
         mMediaPlayer.setWakeMode(activity.getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
         mMediaPlayer.setOnPreparedListener(this);
-        mMediaPlayer.setOnCompletionListener(this);
+        mMediaPlayer.setOnCompletionListener(playerService);
         mMediaPlayer.prepareAsync();
         mMediaPlayer.setOnErrorListener(this);
     }
 
-    public void play(Track track, int position){
-        pos = position;
+    public void play(Track track){
         if (mMediaPlayer == null){
             prepareMediaPlayer(track);
         }else if (mMediaPlayer != null){
@@ -89,37 +76,6 @@ public class MediaPlayerService implements MediaPlayer.OnPreparedListener, Media
         clearMediaPlayer();
     }
 
-//    public void prev(){
-//        Random r = new Random();
-//        if(player.getShuffleMode() == Constants.SHUFFLE_MODE.ON){
-//            int rand = r.nextInt(tracksList.size());
-//            player.setCurrentPlayingPosition(rand);
-//        }else if(player.getCurrentPlayingPosition() > 0 ){
-//            int pos = player.getCurrentPlayingPosition();
-//            player.setCurrentPlayingPosition(--pos);
-//        }else if (player.getCurrentPlayingPosition() == 0){
-//            player.setCurrentPlayingPosition(tracksList.size() - 1);
-//        }
-//        play(tracksList.get(player.getCurrentPlayingPosition()));
-//        activity.updatePlayerUI();
-//
-//    }
-
-//    public void next(){
-//        Random r = new Random();
-//        if(player.getShuffleMode() == Constants.SHUFFLE_MODE.ON){
-//            int rand = r.nextInt(tracksList.size());
-//            player.setCurrentPlayingPosition(rand);
-//        }else if(player.getCurrentPlayingPosition() < tracksList.size() - 1){
-//            int pos = player.getCurrentPlayingPosition();
-//            player.setCurrentPlayingPosition(++pos);
-//        }else if (player.getCurrentPlayingPosition() == tracksList.size() - 1){
-//            player.setCurrentPlayingPosition(0);
-//        }
-//        play(tracksList.get(player.getCurrentPlayingPosition()));
-//        activity.updatePlayerUI();
-//    }
-
     public void seek(int progress){
         mMediaPlayer.seekTo(progress);
     }
@@ -134,39 +90,12 @@ public class MediaPlayerService implements MediaPlayer.OnPreparedListener, Media
 
     }
 
-    @Override
-    public void onCompletion(MediaPlayer mp) {
-//        Random r = new Random();
-//        if(player.getShuffleMode() == Constants.SHUFFLE_MODE.ON){
-//            int rand = r.nextInt(tracksList.size());
-//            player.setCurrentPlayingPosition(rand);
-//            play(tracksList.get(player.getCurrentPlayingPosition()));
-//        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.ONE){
-//            play(tracksList.get(player.getCurrentPlayingPosition()));
-//        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.ALL && player.getCurrentPlayingPosition() < (tracksList.size() - 1)){
-//            player.next();
-//        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.ALL && player.getCurrentPlayingPosition() == (tracksList.size() - 1)){
-//            player.setCurrentPlayingPosition(0);
-//            play(tracksList.get(player.getCurrentPlayingPosition()));
-//        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.OFF && player.getCurrentPlayingPosition() < (tracksList.size() - 1)){
-//            player.next();
-//        }else if (player.getRepeatMode() == Constants.REPEATE_MODE.OFF && player.getCurrentPlayingPosition() == (tracksList.size() - 1)){
-//            player.stop();
-//        }
-//        activity.updatePlayerUI();
-        foregroundService.onCompletition();
-    }
-
     public int getCurrentProgress() {
         if (mMediaPlayer != null && mMediaPlayer.isPlaying()){
             return mMediaPlayer.getCurrentPosition();
         }else {
             return 0;
         }
-    }
-
-    public int getCurrentPlaying(){
-        return pos;
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.mient.mimusicplayer.activities;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -12,8 +13,6 @@ import android.graphics.Point;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -28,11 +27,9 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -45,16 +42,17 @@ import com.mient.mimusicplayer.R;
 import com.mient.mimusicplayer.fragments.PlaylistsFragment;
 import com.mient.mimusicplayer.fragments.TracksFragment;
 import com.mient.mimusicplayer.model.Constants;
+import com.mient.mimusicplayer.model.MusicPlayer;
+import com.mient.mimusicplayer.services.PlayerService;
 import com.mient.mimusicplayer.model.Playlist;
+import com.mient.mimusicplayer.services.ForegroundService;
 import com.mient.mimusicplayer.services.MediaContentService;
-import com.mient.mimusicplayer.services.MediaPlayerService;
-import com.mient.mimusicplayer.services.Player;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MusicPlayer{
 
     private static final String LOG_TAG = "MAIN_ACTIVITY";
 
@@ -95,9 +93,6 @@ public class MainActivity extends AppCompatActivity {
     public static Playlist defaultPlaylist;
     public static List<Playlist> playlistsList;
 
-    //Player
-    private Player player;
-
     //Media Content
     private MediaContentService mediaContentService;
 
@@ -107,22 +102,27 @@ public class MainActivity extends AppCompatActivity {
     private int preferenceRepeat;
     private long preferenceLastTrackId;
 
-    private MediaPlayerService mediaPlayerService;
+    private PlayerService playerService;
     private Handler durationHandler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mainActivity = this;
         setContentView(R.layout.activity_main);
 
-        mediaPlayerService = MediaPlayerService.getInstance();
+        mainActivity = this;
+
+        Intent intent = getIntent();
+        if (intent.getAction() == Constants.ACTION.MAIN_ACTION){
+            playerService = PlayerService.getInstance();
+            durationHandler.postDelayed(updateSeekBarTime, 100);
+        } else {
+            playerService = PlayerService.getInstance();
+        }
 
         //INIT VARIABLES
         defaultPlaylist = new Playlist("default");
-        playlistsList = new ArrayList<Playlist>();
-        player = new Player();
-        player.setPlayerState(Constants.PLAYER_STATE.STOP);
+        playlistsList = new ArrayList<>();
 
         sharedPref = this.getPreferences(Context.MODE_PRIVATE);
 
@@ -169,7 +169,6 @@ public class MainActivity extends AppCompatActivity {
         playerProgressBar.setScaleY(2f);
 
         playerLayout.setTranslationY(displayHeight - convertDpToPixel(74, mainActivity));
-        playerLayout.bringToFront();
         playerLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -177,8 +176,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         playerLayoutState = Constants.LAYOUT_STATE.COLLAPSED;
-
-
 
         playerActionBar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -198,12 +195,10 @@ public class MainActivity extends AppCompatActivity {
         View.OnClickListener playOnClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (player.getPlayerState() == Constants.PLAYER_STATE.PLAY){
-                    durationHandler.postDelayed(updateSeekBarTime, 100);
-                    player.pause();
+                if (playerService.getPlayerState() == Constants.PLAYER_STATE.PLAY){
+                    pause();
                 } else {
-                    durationHandler.removeCallbacks(updateSeekBarTime);
-                    player.play();
+                    play();
                 }
             }
         };
@@ -214,28 +209,28 @@ public class MainActivity extends AppCompatActivity {
         playerPrevButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                player.prev();
+                prev();
             }
         });
 
         playerNextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                player.next();
+                next();
             }
         });
 
         playerShuffleButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                player.shuffle();
+                shuffle();
             }
         });
 
         playerRepeatButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                player.repeat();
+                repeat();
             }
         });
 
@@ -243,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 if(b){
-                    player.seek(i);
+                    seek(i);
                 }
             }
 
@@ -267,36 +262,33 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void mediaContentComplete(){
-        if (defaultPlaylist.getTrackCount() >= 0){
-            defaultPlaylist.setCurrentPosition(0);
+        if (playerService != null && playerService.getActivePlaylist() != null){
+//            seek((playerService.getProgress() * 100) / (int) playerService.getCurrentTrack().getDuration());
+        }else {
+            playerService.init(defaultPlaylist, 0, preferenceShuffle, preferenceRepeat);
+            updatePlayerUI();
         }
-        durationHandler.postDelayed(updateSeekBarTime, 100);
-        player.initPlayer(defaultPlaylist, true);
-        updatePlayerUI();
     }
 
     public void setCurrentTrackPlaying(int position){
-        defaultPlaylist.setCurrentPosition(position);
-        durationHandler.postDelayed(updateSeekBarTime, 100);
-        player.initPlayer(defaultPlaylist, false);
+        playerService.init(defaultPlaylist, position, preferenceShuffle, preferenceShuffle);
+        play();
         updatePlayerUI();
+    }
+
+    public void updatePreferences(){
+        playerService.updatePreferences(preferenceShuffle, preferenceShuffle);
     }
 
     private Runnable updateSeekBarTime = new Runnable() {
         public void run() {
             playerPassedTime.setText(String.format("%02d:%02d",
-                    TimeUnit.MILLISECONDS.toMinutes(mediaPlayerService.getCurrentProgress()),
-                    TimeUnit.MILLISECONDS.toSeconds(mediaPlayerService.getCurrentProgress()) -
+                    TimeUnit.MILLISECONDS.toMinutes(playerService.getProgress()),
+                    TimeUnit.MILLISECONDS.toSeconds(playerService.getProgress()) -
                             TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.
-                                    toMinutes(mediaPlayerService.getCurrentProgress()))));
+                                    toMinutes(playerService.getProgress()))));
 
-            playerProgressBar.setProgress((mediaPlayerService.getCurrentProgress() * 100) / (int) player.getCurrentTrack().getDuration());
-
-            if (mediaPlayerService.getCurrentProgress() < 2){
-                player.setCurrentTrack(mediaPlayerService.getCurrentPlaying());
-                updatePlayerUI();
-            }
-
+            playerProgressBar.setProgress((playerService.getProgress() * 100) / (int) playerService.getCurrentTrack().getDuration());
             durationHandler.postDelayed(this, 100);
         }
     };
@@ -310,34 +302,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void updatePlayerUI(){
-        if(player.getCurrentTrack().getCoverArtPath() == null){
+        if(playerService.getCurrentTrack().getCoverArtPath() == null){
             playerAlbumArt.setImageResource(R.drawable.ic_music_video_black_48dp);
             playerActionBarAlbumArt.setImageResource(R.drawable.ic_music_video_black_48dp);
         }
         else {
             options.inSampleSize = 2;
-            final Bitmap b = BitmapFactory.decodeFile(player.getCurrentTrack().getCoverArtPath(), options);
+            final Bitmap b = BitmapFactory.decodeFile(playerService.getCurrentTrack().getCoverArtPath(), options);
             playerAlbumArt.setImageBitmap(b);
             options.inSampleSize = 8;
-            final Bitmap bb = BitmapFactory.decodeFile(player.getCurrentTrack().getCoverArtPath(), options);
+            final Bitmap bb = BitmapFactory.decodeFile(playerService.getCurrentTrack().getCoverArtPath(), options);
             playerActionBarAlbumArt.setImageBitmap(bb);
         }
 
-        playerActionBarArtist.setText(player.getCurrentTrack().getArtist());
-        playerActionBarTitle.setText(player.getCurrentTrack().getTitle());
+        playerActionBarArtist.setText(playerService.getCurrentTrack().getArtist());
+        playerActionBarTitle.setText(playerService.getCurrentTrack().getTitle());
         playerFullTime.setText(String.format("%02d:%02d",
-                TimeUnit.MILLISECONDS.toMinutes(player.getCurrentTrack().getDuration()),
-                TimeUnit.MILLISECONDS.toSeconds(player.getCurrentTrack().getDuration()) -
+                TimeUnit.MILLISECONDS.toMinutes(playerService.getCurrentTrack().getDuration()),
+                TimeUnit.MILLISECONDS.toSeconds(playerService.getCurrentTrack().getDuration()) -
                         TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.
-                                toMinutes(player.getCurrentTrack().getDuration()))));
+                                toMinutes(playerService.getCurrentTrack().getDuration()))));
 
-        if(player.getShuffleMode() == Constants.SHUFFLE_MODE.ON){
+        if(playerService.getShuffleMode() == Constants.SHUFFLE_MODE.ON){
             playerShuffleButton.setImageResource(R.drawable.ic_shuffle_orange_48dp);
         }else {
             playerShuffleButton.setImageResource(R.drawable.ic_shuffle_white_48dp);
         }
 
-        switch (player.getRepeatMode()){
+        switch (playerService.getRepeatMode()){
             case Constants.REPEATE_MODE.ALL: playerRepeatButton.setImageResource(R.drawable.ic_repeat_orange_48dp);
                 break;
             case Constants.REPEATE_MODE.ONE: playerRepeatButton.setImageResource(R.drawable.ic_repeat_one_orange_48dp);
@@ -347,7 +339,7 @@ public class MainActivity extends AppCompatActivity {
                 playerRepeatButton.setImageResource(R.drawable.ic_repeat_white_48dp);
         }
 
-        switch (player.getPlayerState()){
+        switch (playerService.getPlayerState()){
             case Constants.PLAYER_STATE.PLAY:
                 playerPlayButton.setImageResource(R.drawable.ic_pause_white_48dp);
                 playerActionBarPlay.setImageResource(R.drawable.ic_pause_white_48dp);
@@ -359,7 +351,7 @@ public class MainActivity extends AppCompatActivity {
                 playerActionBarPlay.setImageResource(R.drawable.ic_play_arrow_white_48dp);
         }
 
-        if(player.getPlayerState() == Constants.PLAYER_STATE.STOP){
+        if(playerService.getPlayerState() == Constants.PLAYER_STATE.STOP){
             playerProgressBar.setProgress(0);
         }
     }
@@ -407,9 +399,9 @@ public class MainActivity extends AppCompatActivity {
     private void savePreferences(){
         SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putInt(Constants.KEYS.SHUFFLE, player.getShuffleMode());
-        editor.putInt(Constants.KEYS.REPEAT, player.getRepeatMode());
-        editor.putLong(Constants.KEYS.LAST_TRACK, player.getCurrentTrack().getTrackId());
+        editor.putInt(Constants.KEYS.SHUFFLE, playerService.getShuffleMode());
+        editor.putInt(Constants.KEYS.REPEAT, playerService.getRepeatMode());
+        editor.putLong(Constants.KEYS.LAST_TRACK, playerService.getCurrentTrack().getTrackId());
         editor.commit();
     }
 
@@ -418,13 +410,6 @@ public class MainActivity extends AppCompatActivity {
         preferenceShuffle = sharedPref.getInt(Constants.KEYS.SHUFFLE, Constants.SHUFFLE_MODE.OFF);
         preferenceRepeat = sharedPref.getInt(Constants.KEYS.REPEAT, Constants.REPEATE_MODE.OFF);
         preferenceLastTrackId = sharedPref.getLong(Constants.KEYS.LAST_TRACK, 0);
-
-        player.setShuffleMode(preferenceShuffle);
-        player.setRepeatMode(preferenceRepeat);
-
-        if (defaultPlaylist.getTrackList() != null && defaultPlaylist.getTrackCount() > 0 && preferenceLastTrackId > 0){
-            mediaContentComplete();
-        }
     }
 
     private void getDisplaySize(){
@@ -455,6 +440,108 @@ public class MainActivity extends AppCompatActivity {
         int duration = Toast.LENGTH_SHORT;
         Toast toast = Toast.makeText(context, text, duration);
         toast.show();
+    }
+
+    @Override
+    public void play() {
+        Intent playIntent = new Intent(this, ForegroundService.class);
+        if (playerService.getPlayerState() == Constants.PLAYER_STATE.PAUSE){
+            playIntent.setAction(Constants.ACTION.RESUME_ACTION);
+        } else {
+            playIntent.setAction(Constants.ACTION.PLAY_ACTION);
+        }
+        startService(playIntent);
+        playerService.setPlayerState(Constants.PLAYER_STATE.PLAY);
+        durationHandler.postDelayed(updateSeekBarTime, 100);
+        updatePlayerUI();
+    }
+
+    @Override
+    public void pause() {
+        Intent pauseIntent = new Intent(this, ForegroundService.class);
+        pauseIntent.setAction(Constants.ACTION.PAUSE_ACTION);
+        startService(pauseIntent);
+        playerService.setPlayerState(Constants.PLAYER_STATE.PAUSE);
+        durationHandler.removeCallbacks(updateSeekBarTime);
+        updatePlayerUI();
+    }
+
+    @Override
+    public void prev() {
+        Intent prevIntent = new Intent(this, ForegroundService.class);
+        prevIntent.setAction(Constants.ACTION.PREV_ACTION);
+        startService(prevIntent);
+        playerService.setPlayerState(Constants.PLAYER_STATE.PLAY);
+    }
+
+    @Override
+    public void next() {
+        Intent nextIntent = new Intent(this, ForegroundService.class);
+        nextIntent.setAction(Constants.ACTION.NEXT_ACTION);
+        startService(nextIntent);
+        playerService.setPlayerState(Constants.PLAYER_STATE.PLAY);
+    }
+
+    @Override
+    public void stop() {
+        Intent stopIntent = new Intent(this, ForegroundService.class);
+        stopIntent.setAction(Constants.ACTION.STOP_ACTION);
+        startService(stopIntent);
+        playerService.setPlayerState(Constants.PLAYER_STATE.STOP);
+        updatePlayerUI();
+    }
+
+    @Override
+    public void seek(int progress) {
+        Log.v(LOG_TAG, " ============== PROGRESS ++++++ " + progress);
+        Intent seekIntent = new Intent(this, ForegroundService.class);
+        seekIntent.setAction(Constants.ACTION.SEEK_ACTION);
+        seekIntent.putExtra(Constants.KEYS.SEEK_KEY, progress);
+        startService(seekIntent);
+        updatePlayerUI();
+    }
+
+    @Override
+    public void shuffle() {
+        if (playerService.getShuffleMode() == Constants.SHUFFLE_MODE.ON){
+            playerService.setShuffleMode(Constants.SHUFFLE_MODE.OFF);
+        }else {
+            playerService.setShuffleMode(Constants.SHUFFLE_MODE.ON);
+            playerService.setRepeatMode(Constants.REPEATE_MODE.OFF);
+        }
+        updatePlayerUI();
+    }
+
+    @Override
+    public void repeat() {
+        switch (playerService.getRepeatMode()){
+            case Constants.REPEATE_MODE.ALL:
+                playerService.setRepeatMode(Constants.REPEATE_MODE.ONE);
+                playerService.setShuffleMode(Constants.SHUFFLE_MODE.OFF);
+                break;
+            case Constants.REPEATE_MODE.ONE:
+                playerService.setRepeatMode(Constants.REPEATE_MODE.OFF);
+                break;
+            case Constants.REPEATE_MODE.OFF:
+                playerService.setRepeatMode(Constants.REPEATE_MODE.ALL);
+                playerService.setShuffleMode(Constants.SHUFFLE_MODE.OFF);
+                break;
+            default:
+                playerService.setRepeatMode(Constants.REPEATE_MODE.OFF);
+        }
+        updatePlayerUI();
+    }
+
+    @Override
+    public void close() {
+        //TO DO
+        if (playerService.getPlayerState() == Constants.PLAYER_STATE.PLAY){
+
+        }else {
+            Intent destroyIntent = new Intent(this, ForegroundService.class);
+            destroyIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
+            startService(destroyIntent);
+        }
     }
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
@@ -497,6 +584,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        Log.v(LOG_TAG, " -------------- ON PAUSE ---------------");
     }
 
     @Override
@@ -508,6 +596,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
+        Log.v(LOG_TAG, " -------------- ON STOP ---------------");
     }
 
     @Override
@@ -515,6 +604,6 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         savePreferences();
         durationHandler.removeCallbacks(updateSeekBarTime);
-        player.onDestroy();
+        close();
     }
 }

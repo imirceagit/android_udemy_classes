@@ -52,7 +52,6 @@ public class TracksFragment extends Fragment {
 
         return view;
     }
-
 }
 class VerticalSpaceItemDecorator extends RecyclerView.ItemDecoration {
 

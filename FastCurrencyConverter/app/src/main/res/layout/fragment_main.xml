@@ -45,7 +45,6 @@
         <ImageView
             android:layout_width="60dp"
             android:layout_height="0dp"
-            app:srcCompat="@drawable/ron"
             android:id="@+id/currency_flag"
             app:layout_constraintLeft_toLeftOf="parent"
             android:layout_marginStart="16dp"
@@ -75,7 +74,7 @@
             android:layout_marginBottom="2dp" />
 
         <TextView
-            android:text="Euro"
+            android:text=""
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:id="@+id/currency_name_text"
@@ -90,7 +89,7 @@
             android:layout_marginRight="16dp" />
 
         <TextView
-            android:text="EUR"
+            android:text=""
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:id="@+id/currency_tag_text"

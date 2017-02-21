@@ -15,7 +15,6 @@ public class Constants {
         String NEXT_ACTION = "com.mient.mimusicplayer.action.next";
         String STOP_ACTION = "com.mient.mimusicplayer.action.stop";
         String SEEK_ACTION = "com.mient.mimusicplayer.action.seek";
-        String UPGRADE_ACTION = "com.mient.mimusicplayer.action.upgrade";
         String STARTFOREGROUND_ACTION = "com.mient.mimusicplayer.action.startforeground";
         String STOPFOREGROUND_ACTION = "com.mient.mimusicplayer.action.stopforeground";
     }

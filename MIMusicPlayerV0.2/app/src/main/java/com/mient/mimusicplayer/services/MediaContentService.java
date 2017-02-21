@@ -42,7 +42,6 @@ public class MediaContentService {
         protected void onQueryComplete(int token, Object cookie, Cursor cursor) {
             List<Track> resultList = new ArrayList<>();
 
-            Log.v(LOG_TAG, "onQueryComplete");
             if (cursor == null) {
                 // query failed, handle error.
             } else if (!cursor.moveToFirst()) {

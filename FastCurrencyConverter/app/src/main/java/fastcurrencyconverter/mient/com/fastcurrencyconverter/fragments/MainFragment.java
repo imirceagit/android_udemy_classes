@@ -3,6 +3,7 @@ package fastcurrencyconverter.mient.com.fastcurrencyconverter.fragments;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -35,6 +36,7 @@ public class MainFragment extends Fragment {
     private TextView currencyNameText;
     private TextView currencyTagText;
     private EditText amountText;
+    private ConstraintLayout linearLayout2;
 
     CalcService calc;
     MainActivity activity;
@@ -80,6 +82,7 @@ public class MainFragment extends Fragment {
         currencyNameText = (TextView) view.findViewById(R.id.currency_name_text);
         currencyTagText = (TextView) view.findViewById(R.id.currency_tag_text);
         amountText = (EditText) view.findViewById(R.id.amount_text);
+        linearLayout2 = (ConstraintLayout) view.findViewById(R.id.linearLayout2);
 
         mainSettingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -117,6 +120,8 @@ public class MainFragment extends Fragment {
         adapter = new CurrenciesAdaptor(favoriteCurrencies);
         if(favoriteCurrencies != null && favoriteCurrencies.size() > 0){
             activity.selectCurrency(favoriteCurrencies.get(0));
+        }else {
+//            linearLayout2.setVisibility(View.GONE);
         }
         RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.recycler_currencies);
         recyclerView.setHasFixedSize(true);
@@ -171,7 +176,9 @@ public class MainFragment extends Fragment {
     }
 
     private void calculate(String tag){
-        calc.calculate(tag, amount, favoriteCurrencies);
+        if(favoriteCurrencies.size() > 0){
+            calc.calculate(tag, amount, favoriteCurrencies);
+        }
         updateList();
     }
 

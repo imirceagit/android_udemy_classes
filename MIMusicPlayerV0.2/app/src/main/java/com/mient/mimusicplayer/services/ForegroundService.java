@@ -1,7 +1,6 @@
 package com.mient.mimusicplayer.services;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
@@ -13,11 +12,6 @@ import android.util.Log;
 import com.mient.mimusicplayer.R;
 import com.mient.mimusicplayer.activities.MainActivity;
 import com.mient.mimusicplayer.model.Constants;
-import com.mient.mimusicplayer.model.Playlist;
-import com.mient.mimusicplayer.model.Track;
-
-import java.util.ArrayList;
-import java.util.Random;
 
 /**
  * Created by mircea.ionita on 12/5/2016.
@@ -27,92 +21,67 @@ public class ForegroundService extends Service {
 
     private static final String LOG_TAG = "FOREGROUND_SERVICE";
 
-    private Track currentTrack;
-    private int shuffleMode;
-    private int repeatMode;
-
     private MediaPlayerService mediaPlayerService;
+    private static PlayerService playerService;
 
     @Override
     public void onCreate() {
         super.onCreate();
+
         Log.v(LOG_TAG, "++++++++++++++++++FOREGROUND SERVICE+++++++++++++++++++++");
+
         mediaPlayerService = MediaPlayerService.getInstance();
-        mediaPlayerService.init(this);
+        playerService = PlayerService.getInstance();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         if (intent.getAction().equals(Constants.ACTION.STARTFOREGROUND_ACTION)){
-            Log.v(LOG_TAG, "STARTFOREGROUND_ACTION INTENT");
+            Log.v(LOG_TAG, "STARTFOREGROUND INTENT");
 
-            boolean onstart = false;
-
-            Bundle extras = intent.getExtras();
-            if (extras != null){
-                shuffleMode = extras.getInt(Constants.KEYS.SHUFFLE);
-                repeatMode = extras.getInt(Constants.KEYS.REPEAT);
-                onstart = extras.getBoolean(Constants.KEYS.ONSTART);
-            }
-
-            currentTrack = Player.currentPlaylist.getCurrentTrack();
-
-            if (!onstart){
-                currentTrack = Player.currentPlaylist.getCurrentTrack();
-                mediaPlayerService.play(currentTrack, Player.currentPlaylist.getCurrentPosition());
-            }
 
         } else if (intent.getAction().equals(Constants.ACTION.PREV_ACTION)){
             Log.v(LOG_TAG, "PREV INTENT");
 
-            if(shuffleMode == Constants.SHUFFLE_MODE.ON){
-                currentTrack = Player.currentPlaylist.getPrevTrack(true);
-                mediaPlayerService.play(currentTrack, Player.currentPlaylist.getCurrentPosition());
-            }else {
-                currentTrack = Player.currentPlaylist.getPrevTrack(false);
-                mediaPlayerService.play(currentTrack, Player.currentPlaylist.getCurrentPosition());
-            }
+            mediaPlayerService.play(playerService.getPrevTrack());
 
             Notification notification = createNotification(true);
             startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, notification);
 
         } else if (intent.getAction().equals(Constants.ACTION.PLAY_ACTION)){
-            Log.v(LOG_TAG, "++++++++++++++++++PLAY INTENT+++++++++++++++++++++");
+            Log.v(LOG_TAG, "PLAY INTENT");
 
-            currentTrack = Player.currentPlaylist.getCurrentTrack();
-            mediaPlayerService.play(currentTrack, Player.currentPlaylist.getCurrentPosition());
+            mediaPlayerService.play(playerService.getCurrentTrack());
+            playerService.play();
 
             Notification notification = createNotification(true);
             startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, notification);
 
         } else if (intent.getAction().equals(Constants.ACTION.RESUME_ACTION)){
-            Log.v(LOG_TAG, "++++++++++++++++++RESUME INTENT+++++++++++++++++++++");
+            Log.v(LOG_TAG, "RESUME INTENT");
+
+            mediaPlayerService.resume();
+            playerService.play();
 
             Notification notification = createNotification(true);
             startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, notification);
 
-            mediaPlayerService.resume();
-
         } else if (intent.getAction().equals(Constants.ACTION.PAUSE_ACTION)){
             Log.v(LOG_TAG, "PAUSE INTENT");
+
+            mediaPlayerService.pause();
+            playerService.pause();
 
             Notification notification = createNotification(false);
             startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, notification);
 
-            mediaPlayerService.pause();
             stopForeground(false);
 
         }else if (intent.getAction().equals(Constants.ACTION.NEXT_ACTION)){
             Log.v(LOG_TAG, "NEXT INTENT");
 
-            if(shuffleMode == Constants.SHUFFLE_MODE.ON){
-                currentTrack = Player.currentPlaylist.getNextTrack(true);
-                mediaPlayerService.play(currentTrack, Player.currentPlaylist.getCurrentPosition());
-            }else {
-                currentTrack = Player.currentPlaylist.getNextTrack(false);
-                mediaPlayerService.play(currentTrack, Player.currentPlaylist.getCurrentPosition());
-            }
+            mediaPlayerService.play(playerService.getNextTrack());
 
             Notification notification = createNotification(true);
             startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, notification);
@@ -120,26 +89,22 @@ public class ForegroundService extends Service {
         } else if (intent.getAction().equals(Constants.ACTION.STOP_ACTION)){
             Log.v(LOG_TAG, "STOP INTENT");
 
-        } else if (intent.getAction().equals(Constants.ACTION.UPGRADE_ACTION)){
-            Log.v(LOG_TAG, "UPGRADE_ACTION INTENT");
-            Bundle extras = intent.getExtras();
-            if (extras != null){
-                shuffleMode = extras.getInt(Constants.KEYS.SHUFFLE);
-                repeatMode = extras.getInt(Constants.KEYS.REPEAT);
-            }
+            mediaPlayerService.stop();
+            stopForeground(false);
 
         } else if (intent.getAction().equals(Constants.ACTION.SEEK_ACTION)){
-            Log.v(LOG_TAG, "SEEK_ACTION INTENT");
+            Log.v(LOG_TAG, "SEEK INTENT");
+
             int progress = 0;
             Bundle extras = intent.getExtras();
             if (extras != null){
                 progress = extras.getInt(Constants.KEYS.SEEK_KEY);
             }
-            int location = (int) (currentTrack.getDuration() * progress / 100);
-            mediaPlayerService.seek(location);
+
+            mediaPlayerService.seek(((int) playerService.getCurrentTrack().getDuration()) / 100 * progress);
 
         } else if (intent.getAction().equals(Constants.ACTION.STOPFOREGROUND_ACTION)){
-            Log.v(LOG_TAG, "STOP INTENT");
+            Log.v(LOG_TAG, "STOPFOREGROUND INTENT");
             mediaPlayerService.stop();
             mediaPlayerService.onDestroy();
             stopForeground(true);
@@ -174,9 +139,9 @@ public class ForegroundService extends Service {
 
         if (playing){
             notification = new Notification.Builder(this)
-                    .setContentTitle(currentTrack.getArtist())
+                    .setContentTitle(playerService.getCurrentTrack().getArtist())
                     .setTicker("MI Music Player")
-                    .setContentText(currentTrack.getTitle())
+                    .setContentText(playerService.getCurrentTrack().getTitle())
                     .setSmallIcon(R.drawable.ic_music_video_black_48dp)
                     .setContentIntent(pendingNotificationIntent)
                     .setOngoing(true)
@@ -187,9 +152,9 @@ public class ForegroundService extends Service {
 
         }else {
             notification = new Notification.Builder(this)
-                    .setContentTitle(currentTrack.getArtist())
-                    .setTicker("MI Music Player TI")
-                    .setContentText(currentTrack.getTitle())
+                    .setContentTitle(playerService.getCurrentTrack().getArtist())
+                    .setTicker("MI Music Player")
+                    .setContentText(playerService.getCurrentTrack().getTitle())
                     .setSmallIcon(R.drawable.ic_music_video_black_48dp)
                     .setContentIntent(pendingNotificationIntent)
                     .addAction(R.drawable.ic_skip_previous_black_48dp, "", pendingPrevIntent)
@@ -201,6 +166,10 @@ public class ForegroundService extends Service {
         return notification;
     }
 
+    public static PlayerService getPlayerInstance(){
+        return playerService;
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -210,25 +179,5 @@ public class ForegroundService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
-    }
-
-    public void onCompletition(){
-        Log.v(LOG_TAG, "COMPLETED");
-        if(shuffleMode == Constants.SHUFFLE_MODE.ON){
-            mediaPlayerService.play(Player.currentPlaylist.getNextTrack(true), Player.currentPlaylist.getCurrentPosition());
-        }else {
-            if (repeatMode == Constants.REPEATE_MODE.ONE){
-                mediaPlayerService.play(Player.currentPlaylist.getCurrentTrack(), Player.currentPlaylist.getCurrentPosition());
-            }else if (repeatMode == Constants.REPEATE_MODE.ALL){
-                mediaPlayerService.play(Player.currentPlaylist.getNextTrack(false), Player.currentPlaylist.getCurrentPosition());
-            }else if (repeatMode == Constants.REPEATE_MODE.OFF){
-                if (Player.currentPlaylist.isLastTrack()){
-                    mediaPlayerService.stop();
-                    Player.currentPlaylist.resetPlaylist();
-                } else {
-                    mediaPlayerService.play(Player.currentPlaylist.getNextTrack(false), Player.currentPlaylist.getCurrentPosition());
-                }
-            }
-        }
     }
 }

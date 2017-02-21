@@ -43,11 +43,11 @@ public class MainActivity extends AppCompatActivity {
         dataService = DataService.getInstance();
         dataService.init(this);
 
-        if (dataService.getLastUpdate().equals(lastUpdate)){
-            todayCurrencies = dataService.getLastCurencies();
-        }else {
+//        if (dataService.getLastUpdate().equals(lastUpdate)){
+//            todayCurrencies = dataService.getLastCurencies();
+//        }else {
             todayCurrencies = dataService.downloadCurrentValues("latest");
-        }
+//        }
 
         favoriteCurrencies = dataService.getFavoriteCurrencies();
 
@@ -65,12 +65,13 @@ public class MainActivity extends AppCompatActivity {
     };
 
     public void selectCurrency(Currency item){
-        for (int i = 0; i < favoriteCurrencies.size(); i++){
-            if(favoriteCurrencies.get(i).getTag().equals(item.getTag())){
-                favoriteCurrencies.remove(i);
-            }
-        }
-//        mainFragment.selectCurrency(item);
+//        for (int i = 0; i < favoriteCurrencies.size(); i++){
+//            if(favoriteCurrencies.get(i).getTag().equals(item.getTag())){
+//                favoriteCurrencies.remove(i);
+//            }
+//        }
+//        favoriteCurrencies.add(item);
+        mainFragment.selectCurrency(item);
     }
 
     public void createFavoriteList(){

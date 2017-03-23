@@ -1,0 +1,112 @@
+import java.util.Arrays;
+
+public class SortingAlgol {
+
+	public static void main(String[] args) {
+		
+		int[] unsorted = {6, 5, 1, 8, 2, 11, 7, 4, 9, 3, 10};
+		System.out.println(Arrays.toString(unsorted));
+		
+		Sorting sorting = new Sorting();
+		
+		System.out.println("doBubbleSort    " + Arrays.toString(sorting.doBubbleSort(unsorted)));
+		System.out.println("doSelectionSort " + Arrays.toString(sorting.doSelectionSort(unsorted)));
+		System.out.println("doInsertionSort " + Arrays.toString(sorting.doInsertionSort(unsorted)));
+		System.out.println("doQuickSort     " + Arrays.toString(sorting.doQuickSort(unsorted.clone(), 0, unsorted.length - 1)));
+		System.out.println("UNSORTED        " + Arrays.toString(unsorted));
+	}
+
+}
+
+class Sorting{
+	
+	public int[] doQuickSort(int[] array, int left, int right){
+		
+		int i = left, j = right, tmp;
+		int pivot = array[(left + right) / 2];
+		
+		while(i <=j) {
+			while (array[i] < pivot){
+				i++;
+			}
+			while (array[j] > pivot){
+				j--;
+			}
+			
+			if(i <= j) {
+				tmp = array[i];
+				array[i] = array[j];
+				array[j] = tmp;
+                i++;
+                j--;
+			}
+		}
+		
+		if(left < j){
+			doQuickSort(array, left, j);
+		}
+		if(i < right){
+			doQuickSort(array, i, right);
+		}
+		
+		return array;
+	}
+	
+	public int[] doBubbleSort(int[] unsorted){
+		int[] array = unsorted.clone();
+		
+		boolean changed = true;
+		int aux = 0;
+				
+		while(changed){
+			changed = false;
+			for(int i = 0; i < array.length - 1; i++){
+				if(array[i] > array[i+1]){
+					aux = array[i];
+					array[i] = array[i+1];
+					array[i+1] = aux;
+					changed = true;
+				}
+			}
+		}
+		
+		return array;
+	}
+	
+	public int[] doSelectionSort(int[] unsorted) {
+		int[] array = unsorted.clone();
+		
+	      int minIndex, tmp;
+	      for (int i = 0; i < array.length - 1; i++) {
+	            minIndex = i;
+	            for (int j = i + 1; j < array.length; j++){
+	                  if (array[j] < array[minIndex]){
+	                        minIndex = j;
+	                  }
+	            }
+	            if (minIndex != i) {
+	                  tmp = array[i];
+	                  array[i] = array[minIndex];
+	                  array[minIndex] = tmp;
+	            }
+	      }
+	      return array;
+	}
+	
+	public int[] doInsertionSort(int[] array) {
+		int[] sorted = array.clone();
+		
+		int newVal;
+		
+		for (int i = 1; i < sorted.length; i++){
+			newVal = sorted[i];
+			int j = i;
+			while (j > 0 && sorted[j-1] > newVal){
+				sorted[j] = sorted[j - 1];
+				j--;
+			}
+			sorted[j] = newVal;
+		}
+		return sorted;
+		}
+	}
